@@ -15,7 +15,7 @@ const fontKey = (node: HTMLElement): string => {
   return [...set].sort().join('|');
 };
 
-const getFontCss = (node: HTMLElement): Promise<string> => {
+export const getFontCss = (node: HTMLElement): Promise<string> => {
   const key = fontKey(node);
   let cached = fontCssCache.get(key);
   if (!cached) {
@@ -45,9 +45,16 @@ export const exportCardToBlob = async (node: HTMLElement, dims: CardDimensions):
     cacheBust: false,
     style: { transform: 'none', margin: '0', left: '0', top: '0' },
   };
-  // Safari sometimes paints fonts/SVG only on the second pass.
-  if (isWebKit()) await toBlob(node, options);
-  const blob = await toBlob(node, options);
+  // Pause background animations so the PNG gets their designed frozen frame.
+  node.setAttribute('data-exporting', '');
+  let blob: Blob | null;
+  try {
+    // Safari sometimes paints fonts/SVG only on the second pass.
+    if (isWebKit()) await toBlob(node, options);
+    blob = await toBlob(node, options);
+  } finally {
+    node.removeAttribute('data-exporting');
+  }
   if (!blob || blob.size < 1000) throw new Error('The image could not be generated.');
   return blob;
 };

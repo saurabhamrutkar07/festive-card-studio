@@ -105,6 +105,8 @@ export type LogoPosition = 'top-left' | 'top-center' | 'top-right' | 'bottom-lef
 
 export type LogoSize = 'sm' | 'md' | 'lg';
 
+export type FireworksLevel = 'off' | 'subtle' | 'grand';
+
 export interface LogoOptions {
   /** Processed PNG data URL, or null when no logo is set. */
   src: string | null;

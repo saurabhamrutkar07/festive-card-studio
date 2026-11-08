@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, type CSSProperties, type ReactNode } from 'react';
+import { createContext, useContext, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import { useFontsReady } from '../../hooks/useFontsReady';
 import type { CardDimensions } from '../../types/card';
 
@@ -12,7 +12,15 @@ interface CardRootProps {
   style?: CSSProperties;
 }
 
-export const CardRoot = ({ dims, background, children, style }: CardRootProps) => (
+/**
+ * Optional layer drawn directly above every template's background and below
+ * its artwork and text (used for background effects such as fireworks).
+ */
+export const CardBackdropContext = createContext<ReactNode>(null);
+
+export const CardRoot = ({ dims, background, children, style }: CardRootProps) => {
+  const backdrop = useContext(CardBackdropContext);
+  return (
   <div
     style={{
       width: dims.width,
@@ -26,9 +34,11 @@ export const CardRoot = ({ dims, background, children, style }: CardRootProps) =
       ...style,
     }}
   >
+    {backdrop}
     {children}
   </div>
-);
+  );
+};
 
 /** Absolutely positioned layer helper. */
 export const Layer = ({ style, children }: { style?: CSSProperties; children?: ReactNode }) => (

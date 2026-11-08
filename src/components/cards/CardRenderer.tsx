@@ -1,7 +1,9 @@
 import { forwardRef, memo, type ComponentType } from 'react';
 import { CARD_DIMENSIONS } from '../../data/templates';
-import type { CardContent, CardFormat, LogoOptions, TemplateId, TextStyleOptions } from '../../types/card';
+import type { CardContent, CardFormat, FireworksLevel, LogoOptions, TemplateId, TextStyleOptions } from '../../types/card';
 import { LogoOverlay } from './LogoOverlay';
+import { CardBackdropContext } from './parts';
+import { Fireworks } from './decor/Fireworks';
 import { DeepmalaCard, GendaCard, RajwadaCard, ShuddhCard } from './templates/classicTemplates';
 import { NoirCard, OmkarCard, RangoliCard, UtsavCard } from './templates/festiveTemplates';
 import { AmavasyaCard, AuroraCard, MadhubaniCard, ParivarCard } from './templates/artisticTemplates';
@@ -29,6 +31,8 @@ export interface CardRendererProps {
   style: TextStyleOptions;
   /** Optional business logo, drawn above the template. */
   logo?: LogoOptions;
+  /** Animated fireworks behind the artwork (frozen frame in the PNG). */
+  fireworks?: FireworksLevel;
 }
 
 /**
@@ -36,7 +40,7 @@ export interface CardRendererProps {
  * node that is converted to PNG, so preview and download are identical.
  */
 export const CardRenderer = memo(
-  forwardRef<HTMLDivElement, CardRendererProps>(({ templateId, format, content, style, logo }, ref) => {
+  forwardRef<HTMLDivElement, CardRendererProps>(({ templateId, format, content, style, logo, fireworks = 'off' }, ref) => {
     const dims = CARD_DIMENSIONS[format];
     const Template = TEMPLATE_COMPONENTS[templateId];
     return (
@@ -49,7 +53,9 @@ export const CardRenderer = memo(
         data-language={content.language}
         style={{ width: dims.width, height: dims.height, position: 'relative', overflow: 'hidden' }}
       >
-        <Template content={content} format={format} style={style} dims={dims} />
+        <CardBackdropContext.Provider value={fireworks === 'off' ? null : <Fireworks dims={dims} level={fireworks} />}>
+          <Template content={content} format={format} style={style} dims={dims} />
+        </CardBackdropContext.Provider>
         {logo && <LogoOverlay logo={logo} dims={dims} />}
       </div>
     );

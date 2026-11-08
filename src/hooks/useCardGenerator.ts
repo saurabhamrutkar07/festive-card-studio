@@ -5,6 +5,7 @@ import { pickRandomWish } from '../utils/randomWish';
 import type {
   CardContent,
   CardFormat,
+  FireworksLevel,
   Language,
   LogoOptions,
   MessageMode,
@@ -93,6 +94,7 @@ export const useCardGenerator = () => {
   const [sender, setSender] = useState<SenderDetails>(loadSender);
   const [textStyle, setTextStyle] = useState<TextStyleOptions>(DEFAULT_TEXT_STYLE);
   const [logo, setLogo] = useState<LogoOptions>(loadLogo);
+  const [fireworks, setFireworks] = useState<FireworksLevel>('off');
   const recentWishes = useRef<string[]>([]);
 
   useEffect(() => {
@@ -196,6 +198,7 @@ export const useCardGenerator = () => {
     sender,
     textStyle,
     logo,
+    fireworks,
     visibleWishes,
     content,
     messageIsEmpty,
@@ -203,6 +206,7 @@ export const useCardGenerator = () => {
     // actions
     setTemplateId,
     setFormat,
+    setFireworks,
     setLanguage,
     setMessageMode,
     setWishCategory,

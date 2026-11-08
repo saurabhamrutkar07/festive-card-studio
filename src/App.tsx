@@ -10,6 +10,9 @@ import { WishSelector } from './components/WishSelector';
 import { PersonalisationForm } from './components/PersonalisationForm';
 import { LiveCardPreview } from './components/LiveCardPreview';
 import { LogoUploader } from './components/LogoUploader';
+import { FireworksSelector } from './components/FireworksSelector';
+import { canExportVideo } from './utils/videoExport';
+import { exportMime, type ExportKind, type ExportPurpose } from './hooks/useCardExport';
 import { DownloadButton } from './components/DownloadButton';
 import { WhatsAppShareButton } from './components/WhatsAppShareButton';
 import { ShareDialog, type ShareDialogState } from './components/ShareDialog';
@@ -33,7 +36,7 @@ const focusField = (id: string) => {
 export default function App() {
   const card = useCardGenerator();
   const cardRef = useRef<HTMLDivElement>(null);
-  const { busy, generate } = useCardExport(cardRef, card.format);
+  const { busy, progress, generate } = useCardExport(cardRef, card.format);
   const [nameError, setNameError] = useState<string>();
   const [messageError, setMessageError] = useState<string>();
   const [exportError, setExportError] = useState<string>();
@@ -63,41 +66,50 @@ export default function App() {
     return true;
   };
 
-  const exportFailed = (err: unknown) => {
+  /** With fireworks on, the main download/share is an animated GIF (autoplays in chats). */
+  const animated = card.fireworks !== 'off';
+  const fileFor = (kind: ExportKind) => filename.replace(/\.png$/, `.${kind}`);
+
+  const exportFailed = (err: unknown, kind: ExportKind) => {
     console.error(err);
-    const msg = 'Sorry, we could not create the image. Please try again — if it keeps failing, try another browser (Chrome, Safari or Edge).';
+    const what = kind === 'png' ? 'image' : kind === 'gif' ? 'animated card' : 'video';
+    const msg =
+      err instanceof Error && err.message.includes('browser')
+        ? err.message
+        : `Sorry, we could not create the ${what}. Please try again — if it keeps failing, try another browser (Chrome, Safari or Edge).`;
     setExportError(msg);
     notify('error', msg);
   };
 
-  const handleDownload = async () => {
+  const handleDownload = async (purpose: ExportPurpose, kind: ExportKind) => {
     setExportError(undefined);
     if (!validate()) return;
     try {
-      const blob = await generate('download');
-      downloadBlob(blob, filename);
-      notify('success', `Downloaded ${filename}`);
+      const blob = await generate(purpose, kind);
+      downloadBlob(blob, fileFor(kind));
+      notify('success', `Downloaded ${fileFor(kind)}`);
     } catch (err) {
-      exportFailed(err);
+      exportFailed(err, kind);
     }
-  };
-
-  const fallbackToManual = (blob: Blob) => {
-    downloadBlob(blob, filename);
-    setDialog({ kind: 'manual', filename, whatsappUrl: buildWhatsAppUrl(shareText), mobile: isMobileDevice() });
   };
 
   const handleShare = async () => {
     setExportError(undefined);
     if (!validate()) return;
+    const kind: ExportKind = animated ? 'gif' : 'png';
+    const shareName = fileFor(kind);
     let blob: Blob;
     try {
-      blob = await generate('share');
+      blob = await generate('share', kind);
     } catch (err) {
-      exportFailed(err);
+      exportFailed(err, kind);
       return;
     }
-    const file = new File([blob], filename, { type: 'image/png' });
+    const fallbackToManual = (b: Blob) => {
+      downloadBlob(b, shareName);
+      setDialog({ kind: 'manual', filename: shareName, whatsappUrl: buildWhatsAppUrl(shareText), mobile: isMobileDevice() });
+    };
+    const file = new File([blob], shareName, { type: exportMime(kind) });
     if (!canShareImageFile(file)) {
       fallbackToManual(blob);
       return;
@@ -109,7 +121,7 @@ export default function App() {
     else if (result === 'needs-gesture') {
       setDialog({
         kind: 'retry',
-        filename,
+        filename: shareName,
         whatsappUrl: buildWhatsAppUrl(shareText),
         onShare: async () => {
           setDialog(null);
@@ -144,6 +156,9 @@ export default function App() {
                   <CardFormatSelector value={card.format} onChange={card.setFormat} />
                 </div>
                 <TemplateGallery selectedId={card.templateId} language={card.language} onSelect={card.setTemplateId} />
+                <div className="mt-5">
+                  <FireworksSelector value={card.fireworks} onChange={card.setFireworks} />
+                </div>
               </div>
 
               <div id="wishes" className="panel scroll-mt-20">
@@ -213,10 +228,46 @@ export default function App() {
             <div className="min-w-0 lg:sticky lg:top-20">
               <LiveCardPreview ref={cardRef} templateId={card.templateId} format={card.format} content={card.content} style={card.textStyle}
                 logo={card.logo}
+                fireworks={card.fireworks}
               >
                 <div className="mt-5 space-y-3">
-                  <DownloadButton onClick={handleDownload} loading={busy === 'download'} disabled={!!busy} />
-                  <WhatsAppShareButton onClick={handleShare} loading={busy === 'share'} disabled={!!busy} />
+                  <DownloadButton
+                    onClick={() => handleDownload('download', animated ? 'gif' : 'png')}
+                    loading={busy === 'download'}
+                    disabled={!!busy}
+                    label={animated ? 'Download Animated Card' : undefined}
+                    loadingLabel={animated ? `Creating animation… ${Math.round(progress * 100)}%` : undefined}
+                    progress={animated ? progress : undefined}
+                  />
+                  <WhatsAppShareButton
+                    onClick={handleShare}
+                    loading={busy === 'share'}
+                    disabled={!!busy}
+                    loadingLabel={animated ? `Preparing animation… ${Math.round(progress * 100)}%` : undefined}
+                  />
+                  {animated && (
+                    <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-cream-100/55">
+                      <span>Other formats:</span>
+                      <button
+                        type="button"
+                        disabled={!!busy}
+                        onClick={() => handleDownload('still', 'png')}
+                        className="font-medium text-gold-300 underline-offset-2 hover:underline disabled:opacity-50"
+                      >
+                        {busy === 'still' ? 'Creating…' : 'Still image (PNG)'}
+                      </button>
+                      {canExportVideo() && (
+                        <button
+                          type="button"
+                          disabled={!!busy}
+                          onClick={() => handleDownload('video', 'mp4')}
+                          className="font-medium text-gold-300 underline-offset-2 hover:underline disabled:opacity-50"
+                        >
+                          {busy === 'video' ? `Creating video… ${Math.round(progress * 100)}%` : 'HD video (MP4)'}
+                        </button>
+                      )}
+                    </div>
+                  )}
                   {exportError ? (
                     <p role="alert" className="flex items-start gap-2 rounded-lg bg-red-500/10 p-3 text-xs text-red-200">
                       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /> {exportError}
@@ -225,8 +276,10 @@ export default function App() {
                     <p className="flex items-start gap-2 text-xs leading-relaxed text-cream-100/45">
                       <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                       <span>
-                        Saves as <span className="break-all font-medium text-cream-100/70">{filename}</span>. On phones, sharing opens your share
-                        menu so you can send the image straight to WhatsApp.
+                        Saves as <span className="break-all font-medium text-cream-100/70">{fileFor(animated ? 'gif' : 'png')}</span>.{' '}
+                        {animated
+                          ? 'The animated card plays by itself in WhatsApp chats and photo galleries — no need to open it.'
+                          : 'On phones, sharing opens your share menu so you can send the image straight to WhatsApp.'}
                       </span>
                     </p>
                   )}

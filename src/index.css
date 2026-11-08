@@ -133,6 +133,48 @@
   }
 }
 
+/* ── Card fireworks (components/cards/decor/Fireworks.tsx) ──
+ * Base styles are the frozen frame; animations only play in the live view. */
+.fx-burst,
+.fx-rocket,
+.fx-spark {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation-iteration-count: infinite;
+}
+.fx-burst {
+  animation-name: fx-burst;
+  animation-timing-function: cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+.fx-rocket {
+  animation-name: fx-rocket;
+  animation-timing-function: cubic-bezier(0.35, 0, 0.75, 0.6);
+}
+.fx-spark {
+  animation-name: fx-twinkle;
+  animation-timing-function: ease-in-out;
+}
+@keyframes fx-burst {
+  0%, 16% { transform: scale(0.05); opacity: 0; }
+  22% { opacity: 1; }
+  58% { transform: scale(1); opacity: 0.95; }
+  100% { transform: scale(1.14); opacity: 0; }
+}
+@keyframes fx-rocket {
+  0% { transform: translateY(var(--fx-rise, 400px)); opacity: 0; }
+  12%, 82% { opacity: 1; }
+  100% { transform: translateY(0); opacity: 0; }
+}
+@keyframes fx-twinkle {
+  0%, 100% { transform: scale(0.55); opacity: 0.25; }
+  50% { transform: scale(1); opacity: 1; }
+}
+[data-exporting] .fx-burst,
+[data-exporting] .fx-rocket,
+[data-exporting] .fx-spark {
+  animation: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
