@@ -1,0 +1,149 @@
+/* ── Self-hosted fonts (bundled, no external requests) ─────────────────── */
+@import '@fontsource/poppins/300.css';
+@import '@fontsource/poppins/400.css';
+@import '@fontsource/poppins/500.css';
+@import '@fontsource/poppins/600.css';
+@import '@fontsource/poppins/700.css';
+@import '@fontsource/playfair-display/400.css';
+@import '@fontsource/playfair-display/600.css';
+@import '@fontsource/playfair-display/700.css';
+@import '@fontsource/playfair-display/400-italic.css';
+@import '@fontsource/cormorant-garamond/400.css';
+@import '@fontsource/cormorant-garamond/500.css';
+@import '@fontsource/cormorant-garamond/600.css';
+@import '@fontsource/cormorant-garamond/400-italic.css';
+@import '@fontsource/cormorant-garamond/500-italic.css';
+@import '@fontsource/cinzel/400.css';
+@import '@fontsource/cinzel/600.css';
+@import '@fontsource/cinzel/700.css';
+@import '@fontsource/great-vibes/400.css';
+@import '@fontsource/yatra-one/400.css';
+@import '@fontsource/kalam/400.css';
+@import '@fontsource/kalam/700.css';
+@import '@fontsource/noto-sans-devanagari/400.css';
+@import '@fontsource/noto-sans-devanagari/500.css';
+@import '@fontsource/noto-sans-devanagari/600.css';
+@import '@fontsource/noto-sans-devanagari/700.css';
+@import '@fontsource/noto-serif-devanagari/400.css';
+@import '@fontsource/noto-serif-devanagari/500.css';
+@import '@fontsource/noto-serif-devanagari/600.css';
+@import '@fontsource/noto-serif-devanagari/700.css';
+
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Poppins', 'Noto Sans Devanagari', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Playfair Display', 'Noto Serif Devanagari', Georgia, serif;
+  --font-deco: 'Cinzel', 'Yatra One', Georgia, serif;
+  --font-script: 'Great Vibes', 'Kalam', cursive;
+
+  --color-maroon-950: #1a0509;
+  --color-maroon-900: #2a0a12;
+  --color-maroon-800: #4a0f1c;
+  --color-maroon-700: #6b1526;
+  --color-royal-900: #1d0b2e;
+  --color-royal-800: #2b1145;
+  --color-navy-950: #070b1c;
+  --color-navy-900: #0d1430;
+  --color-gold-200: #f7e3a8;
+  --color-gold-300: #f0cf77;
+  --color-gold-400: #e5b84b;
+  --color-gold-500: #d4a03a;
+  --color-gold-600: #b8862a;
+  --color-saffron-400: #ff9f43;
+  --color-saffron-500: #f5821f;
+  --color-cream-50: #fffaf0;
+  --color-cream-100: #fbf1dc;
+  --color-ivory: #fffdf6;
+
+  --animate-float-up: float-up 14s linear infinite;
+  --animate-flicker: flicker 2.6s ease-in-out infinite;
+  --animate-sway: sway 6s ease-in-out infinite;
+  --animate-fade-in: fade-in 0.7s ease-out both;
+  --animate-glow: glow 4s ease-in-out infinite;
+
+  @keyframes float-up {
+    0% { transform: translateY(0) scale(1); opacity: 0; }
+    10% { opacity: 0.9; }
+    80% { opacity: 0.6; }
+    100% { transform: translateY(-85vh) scale(0.6); opacity: 0; }
+  }
+  @keyframes flicker {
+    0%, 100% { transform: scaleY(1) scaleX(1); opacity: 1; }
+    30% { transform: scaleY(1.06) scaleX(0.97); opacity: 0.94; }
+    60% { transform: scaleY(0.96) scaleX(1.03); opacity: 1; }
+  }
+  @keyframes sway {
+    0%, 100% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes glow {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 0.85; }
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-maroon-950 font-sans text-cream-100 antialiased;
+    overflow-x: hidden;
+  }
+  ::selection {
+    background: rgb(229 184 75 / 0.35);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-gold-400);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .panel {
+    @apply rounded-2xl border border-gold-400/15 bg-white/[0.035] p-5 shadow-[0_10px_40px_-20px_rgba(0,0,0,0.6)] sm:p-6;
+  }
+  .field-input {
+    @apply w-full rounded-xl border border-gold-400/20 bg-black/25 px-4 py-3 text-[15px] text-cream-50 placeholder:text-cream-100/35 transition focus:border-gold-400/70 focus:bg-black/35 focus:outline-none focus:ring-2 focus:ring-gold-400/25;
+  }
+  .chip {
+    @apply inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition;
+  }
+  .chip-idle {
+    @apply border-gold-400/15 bg-white/[0.03] text-cream-100/75 hover:border-gold-400/40 hover:text-cream-50;
+  }
+  .chip-active {
+    @apply border-gold-400 bg-gold-400/15 text-gold-200;
+  }
+  .btn-gold {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-gold-300 to-gold-500 px-6 py-3.5 font-semibold text-maroon-900 shadow-[0_8px_30px_-8px_rgba(229,184,75,0.55)] transition hover:brightness-105 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-gold-400/40 px-6 py-3.5 font-medium text-gold-200 transition hover:border-gold-400 hover:bg-gold-400/10;
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(229 184 75 / 0.3) transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Letter-spacing breaks Devanagari conjuncts and the shirorekha line. */
+[lang='hi'] *,
+[lang='mr'] * {
+  letter-spacing: 0 !important;
+}
