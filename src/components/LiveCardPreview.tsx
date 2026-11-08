@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useState, type ReactNode } from 'react';
 import { CARD_DIMENSIONS, getTemplateById } from '../data/templates';
-import type { CardContent, CardFormat, TemplateId, TextStyleOptions } from '../types/card';
+import type { CardContent, CardFormat, LogoOptions, TemplateId, TextStyleOptions } from '../types/card';
 import { CardRenderer } from './cards/CardRenderer';
 import { ScaledCard } from './ScaledCard';
 
@@ -9,6 +9,7 @@ interface Props {
   format: CardFormat;
   content: CardContent;
   style: TextStyleOptions;
+  logo?: LogoOptions;
   children?: ReactNode;
 }
 
@@ -23,7 +24,7 @@ const useMaxPreviewHeight = () => {
   return h;
 };
 
-export const LiveCardPreview = forwardRef<HTMLDivElement, Props>(({ templateId, format, content, style, children }, ref) => {
+export const LiveCardPreview = forwardRef<HTMLDivElement, Props>(({ templateId, format, content, style, logo, children }, ref) => {
   const maxHeight = useMaxPreviewHeight();
   const template = getTemplateById(templateId);
   const dims = CARD_DIMENSIONS[format];
@@ -43,7 +44,7 @@ export const LiveCardPreview = forwardRef<HTMLDivElement, Props>(({ templateId, 
       </div>
       <div className="rounded-xl bg-[repeating-conic-gradient(rgba(255,255,255,0.025)_0%_25%,transparent_0%_50%)] bg-[length:22px_22px] p-2 sm:p-3">
         <ScaledCard dims={dims} maxHeight={maxHeight} className="drop-shadow-[0_20px_40px_rgba(0,0,0,0.55)]">
-          <CardRenderer ref={ref} templateId={templateId} format={format} content={content} style={style} />
+          <CardRenderer ref={ref} templateId={templateId} format={format} content={content} style={style} logo={logo} />
         </ScaledCard>
       </div>
       {children}

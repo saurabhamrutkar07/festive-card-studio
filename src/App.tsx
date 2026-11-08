@@ -9,6 +9,7 @@ import { LanguageSelector } from './components/LanguageSelector';
 import { WishSelector } from './components/WishSelector';
 import { PersonalisationForm } from './components/PersonalisationForm';
 import { LiveCardPreview } from './components/LiveCardPreview';
+import { LogoUploader } from './components/LogoUploader';
 import { DownloadButton } from './components/DownloadButton';
 import { WhatsAppShareButton } from './components/WhatsAppShareButton';
 import { ShareDialog, type ShareDialogState } from './components/ShareDialog';
@@ -202,10 +203,17 @@ export default function App() {
                   nameError={nameError}
                 />
               </div>
+
+              <div id="branding" className="panel scroll-mt-20">
+                <SectionHeader step={4} title="Add your logo" subtitle="Optional · brand your greetings for clients and customers" />
+                <LogoUploader logo={card.logo} onChange={card.updateLogo} onRemove={card.removeLogo} />
+              </div>
             </div>
 
             <div className="min-w-0 lg:sticky lg:top-20">
-              <LiveCardPreview ref={cardRef} templateId={card.templateId} format={card.format} content={card.content} style={card.textStyle}>
+              <LiveCardPreview ref={cardRef} templateId={card.templateId} format={card.format} content={card.content} style={card.textStyle}
+                logo={card.logo}
+              >
                 <div className="mt-5 space-y-3">
                   <DownloadButton onClick={handleDownload} loading={busy === 'download'} disabled={!!busy} />
                   <WhatsAppShareButton onClick={handleShare} loading={busy === 'share'} disabled={!!busy} />

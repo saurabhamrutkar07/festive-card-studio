@@ -6,6 +6,7 @@ import type {
   CardContent,
   CardFormat,
   Language,
+  LogoOptions,
   MessageMode,
   SenderDetails,
   TemplateId,
@@ -39,6 +40,31 @@ const loadSender = (): SenderDetails => {
   return { name: '', familyName: '', customSenderText: '' };
 };
 
+const LOGO_STORAGE_KEY = 'diwali-card-logo-v1';
+
+export const DEFAULT_LOGO: LogoOptions = { src: null, position: 'top-right', size: 'md', backdrop: false };
+
+const LOGO_POSITIONS: string[] = ['top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'];
+
+/** Restores a saved logo so business users don't re-upload it every visit. */
+const loadLogo = (): LogoOptions => {
+  try {
+    const raw = localStorage.getItem(LOGO_STORAGE_KEY);
+    if (raw) {
+      const p = JSON.parse(raw) as Partial<LogoOptions>;
+      return {
+        src: typeof p.src === 'string' && p.src.startsWith('data:image/png;base64,') ? p.src : null,
+        position: LOGO_POSITIONS.includes(String(p.position)) ? (p.position as LogoOptions['position']) : DEFAULT_LOGO.position,
+        size: p.size === 'sm' || p.size === 'lg' ? p.size : 'md',
+        backdrop: p.backdrop === true,
+      };
+    }
+  } catch {
+    /* storage unavailable — ignore */
+  }
+  return DEFAULT_LOGO;
+};
+
 export const DEFAULT_TEXT_STYLE: TextStyleOptions = {
   senderAlign: 'template',
   fontStyle: 'template',
@@ -66,7 +92,16 @@ export const useCardGenerator = () => {
   const [customMessage, setCustomMessage] = useState('');
   const [sender, setSender] = useState<SenderDetails>(loadSender);
   const [textStyle, setTextStyle] = useState<TextStyleOptions>(DEFAULT_TEXT_STYLE);
+  const [logo, setLogo] = useState<LogoOptions>(loadLogo);
   const recentWishes = useRef<string[]>([]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LOGO_STORAGE_KEY, JSON.stringify(logo));
+    } catch {
+      /* quota exceeded or storage blocked — the logo still works for this session */
+    }
+  }, [logo]);
 
   useEffect(() => {
     try {
@@ -125,6 +160,12 @@ export const useCardGenerator = () => {
     setTextStyle((prev) => ({ ...prev, [key]: value }));
   }, []);
 
+  const updateLogo = useCallback(<K extends keyof LogoOptions>(key: K, value: LogoOptions[K]) => {
+    setLogo((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  const removeLogo = useCallback(() => setLogo((prev) => ({ ...prev, src: null })), []);
+
   const strings = t(language);
 
   const content: CardContent = useMemo(
@@ -154,6 +195,7 @@ export const useCardGenerator = () => {
     isPresetEdited,
     sender,
     textStyle,
+    logo,
     visibleWishes,
     content,
     messageIsEmpty,
@@ -171,6 +213,8 @@ export const useCardGenerator = () => {
     resetPreset,
     updateSender,
     updateTextStyle,
+    updateLogo,
+    removeLogo,
     resetTextStyle: () => setTextStyle(DEFAULT_TEXT_STYLE),
   };
 };

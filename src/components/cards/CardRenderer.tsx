@@ -1,6 +1,7 @@
 import { forwardRef, memo, type ComponentType } from 'react';
 import { CARD_DIMENSIONS } from '../../data/templates';
-import type { CardContent, CardFormat, TemplateId, TextStyleOptions } from '../../types/card';
+import type { CardContent, CardFormat, LogoOptions, TemplateId, TextStyleOptions } from '../../types/card';
+import { LogoOverlay } from './LogoOverlay';
 import { DeepmalaCard, GendaCard, RajwadaCard, ShuddhCard } from './templates/classicTemplates';
 import { NoirCard, OmkarCard, RangoliCard, UtsavCard } from './templates/festiveTemplates';
 import { AmavasyaCard, AuroraCard, MadhubaniCard, ParivarCard } from './templates/artisticTemplates';
@@ -26,6 +27,8 @@ export interface CardRendererProps {
   format: CardFormat;
   content: CardContent;
   style: TextStyleOptions;
+  /** Optional business logo, drawn above the template. */
+  logo?: LogoOptions;
 }
 
 /**
@@ -33,7 +36,7 @@ export interface CardRendererProps {
  * node that is converted to PNG, so preview and download are identical.
  */
 export const CardRenderer = memo(
-  forwardRef<HTMLDivElement, CardRendererProps>(({ templateId, format, content, style }, ref) => {
+  forwardRef<HTMLDivElement, CardRendererProps>(({ templateId, format, content, style, logo }, ref) => {
     const dims = CARD_DIMENSIONS[format];
     const Template = TEMPLATE_COMPONENTS[templateId];
     return (
@@ -47,6 +50,7 @@ export const CardRenderer = memo(
         style={{ width: dims.width, height: dims.height, position: 'relative', overflow: 'hidden' }}
       >
         <Template content={content} format={format} style={style} dims={dims} />
+        {logo && <LogoOverlay logo={logo} dims={dims} />}
       </div>
     );
   }),

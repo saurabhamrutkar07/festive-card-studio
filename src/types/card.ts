@@ -100,3 +100,16 @@ export interface CardDimensions {
   height: number;
   label: string;
 }
+
+export type LogoPosition = 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
+
+export type LogoSize = 'sm' | 'md' | 'lg';
+
+export interface LogoOptions {
+  /** Processed PNG data URL, or null when no logo is set. */
+  src: string | null;
+  position: LogoPosition;
+  size: LogoSize;
+  /** Draw a soft white badge behind the logo so it stays readable on dark designs. */
+  backdrop: boolean;
+}
