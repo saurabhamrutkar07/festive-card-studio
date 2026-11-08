@@ -1,4 +1,5 @@
 import type { CardDimensions, LogoOptions } from '../../types/card';
+import { logoFrameRadius, logoImgStyle } from './logoShape';
 
 /** Logo box height as a share of the card's shorter side. */
 const SIZE_RATIO = { sm: 0.1, md: 0.14, lg: 0.19 } as const;
@@ -23,17 +24,13 @@ export const LogoOverlay = ({ logo, dims }: { logo: LogoOptions; dims: CardDimen
         ...(h === 'center' ? { left: '50%', transform: 'translateX(-50%)' } : { [h]: inset }),
         zIndex: 20,
         padding: pad,
-        borderRadius: logo.backdrop ? Math.round(boxH * 0.18) : 0,
+        borderRadius: logo.backdrop ? logoFrameRadius(logo.shape, Math.round(boxH * 0.18)) : 0,
         background: logo.backdrop ? 'rgba(255,255,255,0.92)' : 'transparent',
         boxShadow: logo.backdrop ? '0 6px 24px rgba(0,0,0,0.25)' : 'none',
         lineHeight: 0,
       }}
     >
-      <img
-        src={logo.src}
-        alt=""
-        style={{ display: 'block', height: boxH, width: 'auto', maxWidth: Math.round(dims.width * 0.32), objectFit: 'contain' }}
-      />
+      <img src={logo.src} alt="" style={logoImgStyle(logo.shape, boxH, Math.round(dims.width * 0.32))} />
     </div>
   );
 };

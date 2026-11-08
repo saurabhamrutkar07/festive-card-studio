@@ -1,15 +1,15 @@
 import { useCallback, useState, type RefObject } from 'react';
 import { CARD_DIMENSIONS } from '../data/templates';
 import { exportCardToBlob } from '../utils/imageExport';
-import { exportCardToGif, exportCardToVideo } from '../utils/videoExport';
+import { exportCardToGif } from '../utils/animationExport';
 import type { CardFormat } from '../types/card';
 
-export type ExportKind = 'png' | 'gif' | 'mp4';
-export type ExportPurpose = 'download' | 'share' | 'video' | 'still';
+export type ExportKind = 'png' | 'gif';
+export type ExportPurpose = 'download' | 'share' | 'still';
 
-const MIME: Record<ExportKind, string> = { png: 'image/png', gif: 'image/gif', mp4: 'video/mp4' };
+const MIME: Record<ExportKind, string> = { png: 'image/png', gif: 'image/gif' };
 
-/** Wraps PNG / GIF / MP4 generation with loading, progress and error state. */
+/** Wraps PNG / GIF generation with loading, progress and error state. */
 export const useCardExport = (cardRef: RefObject<HTMLDivElement>, format: CardFormat) => {
   const [busy, setBusy] = useState<false | ExportPurpose>(false);
   const [progress, setProgress] = useState(0);
@@ -23,7 +23,6 @@ export const useCardExport = (cardRef: RefObject<HTMLDivElement>, format: CardFo
       setProgress(0);
       try {
         if (kind === 'gif') return await exportCardToGif(node, dims, setProgress);
-        if (kind === 'mp4') return await exportCardToVideo(node, dims, setProgress);
         return await exportCardToBlob(node, dims);
       } finally {
         setBusy(false);

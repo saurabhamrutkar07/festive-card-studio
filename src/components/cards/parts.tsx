@@ -1,6 +1,13 @@
 import { createContext, useContext, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import { useFontsReady } from '../../hooks/useFontsReady';
-import type { CardDimensions } from '../../types/card';
+import type { CardDimensions, LogoOptions } from '../../types/card';
+import { logoFrameRadius, logoImgStyle } from './logoShape';
+
+/** Business logo for the current card; SenderBlock draws it when placed at the signature. */
+export const CardLogoContext = createContext<LogoOptions | null>(null);
+
+/** Logo height relative to the sender name size, so it suits every template. */
+const SIGNATURE_LOGO_SCALE = { sm: 1.5, md: 2, lg: 2.6 } as const;
 
 /* ──────────────────────────────────────────────────────────────────────────
  * CardRoot — the exportable canvas. Always rendered at its real pixel size.
@@ -154,8 +161,30 @@ export const SenderBlock = ({
   width = '100%',
   gap = 6,
   before,
-}: SenderBlockProps) => (
+}: SenderBlockProps) => {
+  const logo = useContext(CardLogoContext);
+  const showLogo = !!logo?.src && logo.position === 'signature';
+  const logoH = showLogo ? Math.round(nameMax * SIGNATURE_LOGO_SCALE[logo.size]) : 0;
+  const accent = (nameStyle?.color as string | undefined) ?? 'currentColor';
+  return (
   <div style={{ width, display: 'flex', flexDirection: 'column', gap, textAlign: align, flexShrink: 0 }}>
+    {showLogo && (
+      <div
+        data-card-logo
+        style={{
+          alignSelf: align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center',
+          marginBottom: Math.round(nameMax * 0.25),
+          padding: logo.backdrop ? Math.round(logoH * 0.12) : 0,
+          borderRadius: logoFrameRadius(logo.shape, Math.round(logoH * 0.16)),
+          background: logo.backdrop ? 'rgba(255,255,255,0.94)' : 'transparent',
+          // A hairline in the template's own name colour ties the badge to the design.
+          boxShadow: logo.backdrop ? `0 0 0 2px color-mix(in srgb, ${accent} 45%, transparent), 0 8px 24px rgba(0,0,0,0.18)` : 'none',
+          lineHeight: 0,
+        }}
+      >
+        <img src={logo.src!} alt="" style={logoImgStyle(logo.shape, logoH, 420)} />
+      </div>
+    )}
     {before}
     {intro && (
       <div style={{ lineHeight: 1.4, overflowWrap: 'anywhere', ...introStyle }}>{intro}</div>
@@ -170,7 +199,8 @@ export const SenderBlock = ({
       valign="start"
     />
   </div>
-);
+  );
+};
 
 /* Small ornamental divider: line – diamond – line */
 export const OrnamentDivider = ({ color, width = 260, opacity = 1 }: { color: string; width?: number; opacity?: number }) => (

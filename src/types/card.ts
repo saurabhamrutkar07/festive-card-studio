@@ -14,7 +14,11 @@ export type TemplateCategory =
   | 'Traditional Indian Art'
   | 'Contemporary Gradient'
   | 'Family Celebration'
-  | 'Premium Dark Theme';
+  | 'Premium Dark Theme'
+  // Business
+  | 'Letterhead'
+  | 'Logo Hero'
+  | 'Sign-off';
 
 export type TemplateId =
   | 'deepmala'
@@ -28,10 +32,20 @@ export type TemplateId =
   | 'madhubani'
   | 'aurora'
   | 'parivar'
-  | 'amavasya';
+  | 'amavasya'
+  | 'biz-letterhead-ivory'
+  | 'biz-letterhead-navy'
+  | 'biz-hero-marigold'
+  | 'biz-hero-midnight'
+  | 'biz-signoff-maroon'
+  | 'biz-signoff-minimal';
+
+/** Personal cards are signed by people; business cards are branded with a company. */
+export type CardMode = 'personal' | 'business';
 
 export interface CardTemplate {
   id: TemplateId;
+  mode: CardMode;
   name: string;
   category: TemplateCategory;
   description: string;
@@ -65,9 +79,15 @@ export type TextAlign = 'template' | 'left' | 'center' | 'right';
 
 export type FontScale = 'sm' | 'md' | 'lg';
 
+export type SignAs = 'me' | 'withFamily' | 'family';
+
+/** Free-text sender fields (signAs is set separately). */
+export type SenderTextField = 'name' | 'customSenderText';
+
 export interface SenderDetails {
   name: string;
-  familyName: string;
+  /** How the card is signed: just the name, name + family, or family only. */
+  signAs: SignAs;
   customSenderText: string;
 }
 
@@ -87,6 +107,26 @@ export interface CardContent {
   senderIntro: string;
   senderName: string;
   language: Language;
+  /** Present on business cards: the brand details the business templates lay out. */
+  business?: BusinessContent;
+}
+
+export interface BusinessDetails {
+  name: string;
+  tagline: string;
+  phone: string;
+  website: string;
+  address: string;
+  /** Business's own sign-off line (kept separate from the personal one). */
+  signoff: string;
+}
+
+export type ContactKind = 'phone' | 'website' | 'address';
+
+export interface BusinessContent {
+  name: string;
+  tagline: string;
+  contacts: { kind: ContactKind; text: string }[];
 }
 
 export interface CardRenderProps {
@@ -101,9 +141,12 @@ export interface CardDimensions {
   label: string;
 }
 
-export type LogoPosition = 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
+/** 'signature' places the logo with the sender name, inside the template's layout. */
+export type LogoPosition = 'signature' | 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
 
 export type LogoSize = 'sm' | 'md' | 'lg';
+
+export type LogoShape = 'original' | 'circle' | 'rounded' | 'square';
 
 export type FireworksLevel = 'off' | 'subtle' | 'grand';
 
@@ -112,6 +155,8 @@ export interface LogoOptions {
   src: string | null;
   position: LogoPosition;
   size: LogoSize;
+  /** Crop/mask applied to the logo (and frames drawn around it). */
+  shape: LogoShape;
   /** Draw a soft white badge behind the logo so it stays readable on dark designs. */
   backdrop: boolean;
 }

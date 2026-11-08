@@ -11,7 +11,7 @@ import { PersonalisationForm } from './components/PersonalisationForm';
 import { LiveCardPreview } from './components/LiveCardPreview';
 import { LogoUploader } from './components/LogoUploader';
 import { FireworksSelector } from './components/FireworksSelector';
-import { canExportVideo } from './utils/videoExport';
+import { ModeSwitch } from './components/ModeSwitch';
 import { exportMime, type ExportKind, type ExportPurpose } from './hooks/useCardExport';
 import { DownloadButton } from './components/DownloadButton';
 import { WhatsAppShareButton } from './components/WhatsAppShareButton';
@@ -19,6 +19,7 @@ import { ShareDialog, type ShareDialogState } from './components/ShareDialog';
 import { SectionHeader } from './components/SectionHeader';
 import { Toast, type ToastMessage } from './components/Toast';
 import { Footer } from './components/Footer';
+import { ContactSection } from './components/ContactSection';
 import { formatSenderName, useCardGenerator } from './hooks/useCardGenerator';
 import { useCardExport } from './hooks/useCardExport';
 import { downloadBlob } from './utils/imageExport';
@@ -47,14 +48,15 @@ export default function App() {
   const dismissToast = useCallback(() => setToast(null), []);
   const closeDialog = useCallback(() => setDialog(null), []);
 
-  const filename = buildCardFilename(card.sender.name, card.sender.familyName);
-  const shareText = `${card.shareMessage}\n\n— ${formatSenderName(card.sender, card.language)}`;
+  const isBusiness = card.mode === 'business';
+  const filename = buildCardFilename(isBusiness ? card.business.name.trim() : card.sender.name.trim() ? formatSenderName(card.sender, 'en') : '');
+  const shareText = `${card.shareMessage}\n\n— ${card.signature || card.content.senderName}`;
 
   const validate = (): boolean => {
-    if (!card.sender.name.trim()) {
-      setNameError('Please enter your name — it will appear on your card.');
-      notify('error', 'Add your name before downloading or sharing your card.');
-      focusField('sender-name');
+    if (!card.signature) {
+      setNameError(isBusiness ? 'Please enter your business name — it will appear on your card.' : 'Please enter your name — it will appear on your card.');
+      notify('error', isBusiness ? 'Add your business name before downloading or sharing.' : 'Add your name before downloading or sharing your card.');
+      focusField(isBusiness ? 'business-name' : 'sender-name');
       return false;
     }
     if (card.messageIsEmpty) {
@@ -72,7 +74,7 @@ export default function App() {
 
   const exportFailed = (err: unknown, kind: ExportKind) => {
     console.error(err);
-    const what = kind === 'png' ? 'image' : kind === 'gif' ? 'animated card' : 'video';
+    const what = kind === 'png' ? 'image' : 'animated card';
     const msg =
       err instanceof Error && err.message.includes('browser')
         ? err.message
@@ -146,16 +148,29 @@ export default function App() {
             <p className="text-sm font-semibold uppercase tracking-[0.25em] text-gold-400/80">Card Studio</p>
             <h2 className="mt-2 font-display text-3xl font-semibold text-cream-50 sm:text-4xl">Design your Diwali greeting</h2>
             <p className="mx-auto mt-3 max-w-xl text-cream-100/60">Every change appears instantly in the live preview.</p>
+            <div className="mt-6">
+              <ModeSwitch
+                value={card.mode}
+                onChange={(m) => {
+                  setNameError(undefined);
+                  card.setMode(m);
+                }}
+              />
+            </div>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-start">
             <div className="min-w-0 space-y-6">
               <div id="designs" className="panel scroll-mt-20">
-                <SectionHeader step={1} title="Choose a design" subtitle="12 handcrafted templates · pick your card size" />
+                <SectionHeader
+                  step={1}
+                  title="Choose a design"
+                  subtitle={isBusiness ? '6 business designs built around your logo · pick your card size' : '12 handcrafted templates · pick your card size'}
+                />
                 <div className="mb-5">
                   <CardFormatSelector value={card.format} onChange={card.setFormat} />
                 </div>
-                <TemplateGallery selectedId={card.templateId} language={card.language} onSelect={card.setTemplateId} />
+                <TemplateGallery key={card.mode} mode={card.mode} selectedId={card.templateId} language={card.language} onSelect={card.setTemplateId} />
                 <div className="mt-5">
                   <FireworksSelector value={card.fireworks} onChange={card.setFireworks} />
                 </div>
@@ -203,13 +218,24 @@ export default function App() {
               </div>
 
               <div id="personalise" className="panel scroll-mt-20">
-                <SectionHeader step={3} title="Personalise" subtitle="Add your name and style the text" />
+                <SectionHeader
+                  step={3}
+                  title={isBusiness ? 'Business details' : 'Personalise'}
+                  subtitle={isBusiness ? 'Your business name, tagline and contact line' : 'Add your name and style the text'}
+                />
                 <PersonalisationForm
+                  mode={card.mode}
+                  business={card.business}
+                  onBusinessChange={(k, v) => {
+                    if (k === 'name' && v.trim()) setNameError(undefined);
+                    card.updateBusiness(k, v);
+                  }}
                   sender={card.sender}
                   onSenderChange={(k, v) => {
                     if (k === 'name' && v.trim()) setNameError(undefined);
                     card.updateSender(k, v);
                   }}
+                  onSignAsChange={card.setSignAs}
                   textStyle={card.textStyle}
                   onStyleChange={card.updateTextStyle}
                   onResetStyle={card.resetTextStyle}
@@ -219,15 +245,18 @@ export default function App() {
                 />
               </div>
 
-              <div id="branding" className="panel scroll-mt-20">
-                <SectionHeader step={4} title="Add your logo" subtitle="Optional · brand your greetings for clients and customers" />
-                <LogoUploader logo={card.logo} onChange={card.updateLogo} onRemove={card.removeLogo} />
-              </div>
+              {/* Logos are a Business-mode feature for now; personal cards stay logo-free. */}
+              {isBusiness && (
+                <div id="branding" className="panel scroll-mt-20">
+                  <SectionHeader step={4} title="Your logo" subtitle="The centrepiece of every business design" />
+                  <LogoUploader mode={card.mode} logo={card.logo} onChange={card.updateLogo} onRemove={card.removeLogo} />
+                </div>
+              )}
             </div>
 
             <div className="min-w-0 lg:sticky lg:top-20">
               <LiveCardPreview ref={cardRef} templateId={card.templateId} format={card.format} content={card.content} style={card.textStyle}
-                logo={card.logo}
+                logo={isBusiness ? card.logo : undefined}
                 fireworks={card.fireworks}
               >
                 <div className="mt-5 space-y-3">
@@ -247,25 +276,15 @@ export default function App() {
                   />
                   {animated && (
                     <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-cream-100/55">
-                      <span>Other formats:</span>
+                      <span>Prefer a still picture?</span>
                       <button
                         type="button"
                         disabled={!!busy}
                         onClick={() => handleDownload('still', 'png')}
                         className="font-medium text-gold-300 underline-offset-2 hover:underline disabled:opacity-50"
                       >
-                        {busy === 'still' ? 'Creating…' : 'Still image (PNG)'}
+                        {busy === 'still' ? 'Creating…' : 'Download image (PNG)'}
                       </button>
-                      {canExportVideo() && (
-                        <button
-                          type="button"
-                          disabled={!!busy}
-                          onClick={() => handleDownload('video', 'mp4')}
-                          className="font-medium text-gold-300 underline-offset-2 hover:underline disabled:opacity-50"
-                        >
-                          {busy === 'video' ? `Creating video… ${Math.round(progress * 100)}%` : 'HD video (MP4)'}
-                        </button>
-                      )}
                     </div>
                   )}
                   {exportError ? (
@@ -288,6 +307,7 @@ export default function App() {
             </div>
           </div>
         </section>
+        <ContactSection />
       </main>
       <Footer />
       <ShareDialog state={dialog} onClose={closeDialog} />

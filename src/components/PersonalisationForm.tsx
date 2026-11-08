@@ -1,8 +1,14 @@
 import { memo, useState } from 'react';
 import { AlignCenter, AlignLeft, AlignRight, ChevronDown, Palette, RotateCcw, Wand2 } from 'lucide-react';
-import { LIMITS } from '../hooks/useCardGenerator';
+import { BUSINESS_LIMITS, LIMITS } from '../hooks/useCardGenerator';
 import { USER_FONT_OPTIONS } from './cards/typography';
-import type { FontScale, FontStyle, SenderDetails, TextAlign, TextStyleOptions } from '../types/card';
+import type { BusinessDetails, CardMode, FontScale, FontStyle, SenderDetails, SenderTextField, SignAs, TextAlign, TextStyleOptions } from '../types/card';
+
+const SIGN_AS_OPTIONS: { v: SignAs; label: string; example: string }[] = [
+  { v: 'me', label: 'Just me', example: 'John Doe' },
+  { v: 'withFamily', label: 'Me & family', example: 'John Doe & Family' },
+  { v: 'family', label: 'Whole family', example: 'Doe Family' },
+];
 
 const COLOR_SWATCHES = [
   { value: 'template', label: 'Design default' },
@@ -15,8 +21,12 @@ const COLOR_SWATCHES = [
 ];
 
 interface Props {
+  mode: CardMode;
+  business: BusinessDetails;
+  onBusinessChange: (key: keyof BusinessDetails, value: string) => void;
   sender: SenderDetails;
-  onSenderChange: (key: keyof SenderDetails, value: string) => void;
+  onSenderChange: (key: SenderTextField, value: string) => void;
+  onSignAsChange: (value: SignAs) => void;
   textStyle: TextStyleOptions;
   onStyleChange: <K extends keyof TextStyleOptions>(key: K, value: TextStyleOptions[K]) => void;
   onResetStyle: () => void;
@@ -82,42 +92,120 @@ const Field = ({
 );
 
 export const PersonalisationForm = memo(
-  ({ sender, onSenderChange, textStyle, onStyleChange, onResetStyle, senderPreview, senderIntroPreview, nameError }: Props) => {
+  ({
+    mode,
+    sender,
+    onSenderChange,
+    onSignAsChange,
+    business,
+    onBusinessChange,
+    textStyle,
+    onStyleChange,
+    onResetStyle,
+    senderPreview,
+    senderIntroPreview,
+    nameError,
+  }: Props) => {
     const [showStyle, setShowStyle] = useState(false);
     const styleChanged =
       textStyle.fontStyle !== 'template' || textStyle.senderAlign !== 'template' || textStyle.fontScale !== 'md' || textStyle.textColor !== 'template';
 
     return (
       <div className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field
-            id="sender-name"
-            label="Your Name"
-            required
-            value={sender.name}
-            max={LIMITS.name}
-            placeholder="e.g. Saurabh"
-            onChange={(v) => onSenderChange('name', v)}
-            error={nameError}
-          />
-          <Field
-            id="family-name"
-            label="Family Name"
-            value={sender.familyName}
-            max={LIMITS.familyName}
-            placeholder="e.g. Wani"
-            hint="Adds “& Family” after your name."
-            onChange={(v) => onSenderChange('familyName', v)}
-          />
+        {mode === 'business' ? (
+          <>
+            <Field
+              id="business-name"
+              label="Business Name"
+              required
+              value={business.name}
+              max={BUSINESS_LIMITS.name}
+              placeholder="e.g. Sharma Sweets"
+              hint="No logo yet? Its initials are used as a monogram."
+              onChange={(v) => onBusinessChange('name', v)}
+              error={nameError}
+            />
+            <Field
+              id="business-tagline"
+              label="Tagline"
+              value={business.tagline}
+              max={BUSINESS_LIMITS.tagline}
+              placeholder="e.g. Pure Ghee Mithai since 1985"
+              onChange={(v) => onBusinessChange('tagline', v)}
+            />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field
+                id="business-phone"
+                label="Phone"
+                value={business.phone}
+                max={BUSINESS_LIMITS.phone}
+                placeholder="e.g. +91 98765 43210"
+                onChange={(v) => onBusinessChange('phone', v)}
+              />
+              <Field
+                id="business-website"
+                label="Website"
+                value={business.website}
+                max={BUSINESS_LIMITS.website}
+                placeholder="e.g. yourbusiness.in"
+                onChange={(v) => onBusinessChange('website', v)}
+              />
+            </div>
+            <Field
+              id="business-address"
+              label="Address"
+              value={business.address}
+              max={BUSINESS_LIMITS.address}
+              placeholder="e.g. MG Road, Pune"
+              hint="Phone, website and address appear as a contact line on the card."
+              onChange={(v) => onBusinessChange('address', v)}
+            />
+          </>
+        ) : (
+        <>
+        <Field
+          id="sender-name"
+          label="Your Name"
+          required
+          value={sender.name}
+          max={LIMITS.name}
+          placeholder="e.g. John Doe"
+          hint={sender.signAs === 'family' ? 'The last word is used as your family name.' : undefined}
+          onChange={(v) => onSenderChange('name', v)}
+          error={nameError}
+        />
+
+        <div>
+          <span className="mb-2 block text-sm font-medium text-cream-100/85">Sign as</span>
+          <div role="radiogroup" aria-label="Sign as" className="grid grid-cols-3 gap-1 rounded-lg border border-gold-400/15 bg-black/25 p-1">
+            {SIGN_AS_OPTIONS.map(({ v, label, example }) => {
+              const active = sender.signAs === v;
+              return (
+                <button
+                  key={v}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => onSignAsChange(v)}
+                  className={`rounded-md px-1.5 py-2 text-center transition ${active ? 'bg-gold-400 text-maroon-900' : 'text-cream-100/70 hover:text-cream-50'}`}
+                >
+                  <span className="block text-sm font-medium">{label}</span>
+                  <span className={`block truncate text-[11px] ${active ? 'text-maroon-900/70' : 'text-cream-100/40'}`}>{example}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
+        </>
+        )}
         <Field
           id="custom-sender"
-          label="Custom Sender Text"
-          value={sender.customSenderText}
-          max={LIMITS.customSenderText}
-          placeholder="e.g. With love and light from"
+          label={mode === 'business' ? 'Sign-off Line' : 'Custom Sender Text'}
+          value={mode === 'business' ? business.signoff : sender.customSenderText}
+          max={mode === 'business' ? BUSINESS_LIMITS.signoff : LIMITS.customSenderText}
+          placeholder={mode === 'business' ? 'e.g. With warm regards from' : 'e.g. With love and light from'}
           hint="Replaces the default “Happy Diwali Wishes From” line."
-          onChange={(v) => onSenderChange('customSenderText', v)}
+          onChange={(v) => (mode === 'business' ? onBusinessChange('signoff', v) : onSenderChange('customSenderText', v))}
         />
 
         <div className="rounded-xl border border-dashed border-gold-400/25 bg-black/20 px-4 py-3 text-center">
@@ -141,6 +229,8 @@ export const PersonalisationForm = memo(
           {showStyle && (
             <div className="space-y-5 border-t border-gold-400/10 px-4 pb-5 pt-4">
               <div className="grid gap-5 sm:grid-cols-2">
+                {/* Business designs have a fixed signature layout, so alignment only applies to personal cards. */}
+                {mode === 'personal' && (
                 <div>
                   <span className="mb-2 block text-xs font-medium uppercase tracking-wider text-cream-100/50">Sender alignment</span>
                   <div className="grid grid-cols-4 gap-1 rounded-lg border border-gold-400/15 bg-black/25 p-1">
@@ -168,6 +258,7 @@ export const PersonalisationForm = memo(
                     ))}
                   </div>
                 </div>
+                )}
                 <div>
                   <span className="mb-2 block text-xs font-medium uppercase tracking-wider text-cream-100/50">Text size</span>
                   <div className="grid grid-cols-3 gap-1 rounded-lg border border-gold-400/15 bg-black/25 p-1">

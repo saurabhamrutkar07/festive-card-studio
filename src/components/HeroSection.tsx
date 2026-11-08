@@ -55,7 +55,7 @@ export const HeroSection = memo(({ language }: { language: Language }) => {
       subheading: s.subheading,
       message: getWishById('traditional-2')?.text[language] ?? '',
       senderIntro: s.senderIntro,
-      senderName: language === 'en' ? 'Saurabh Wani & Family' : language === 'hi' ? 'सौरभ वाणी एवं परिवार' : 'सौरभ वाणी व परिवार',
+      senderName: language === 'en' ? 'John Doe & Family' : language === 'hi' ? 'जॉन डो एवं परिवार' : 'जॉन डो व परिवार',
       language,
     };
   }, [language]);

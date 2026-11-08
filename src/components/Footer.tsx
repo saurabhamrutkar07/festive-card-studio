@@ -1,5 +1,6 @@
 import { Heart } from 'lucide-react';
 import { Diya } from './cards/decor/lamps';
+import { OWNER_CONTACT } from '../data/contact';
 
 export const Footer = () => (
   <footer className="border-t border-gold-400/10 bg-black/30">
@@ -12,7 +13,7 @@ export const Footer = () => (
         Made with <Heart className="inline h-3.5 w-3.5 fill-saffron-500 text-saffron-500" /> for the festival of lights. Your cards are created
         entirely in your browser — nothing is uploaded.
       </p>
-      <p>शुभ दीपावली ✦</p>
+      <p>{OWNER_CONTACT.name ? `Designed & built by ${OWNER_CONTACT.name}` : 'शुभ दीपावली ✦'}</p>
     </div>
   </footer>
 );

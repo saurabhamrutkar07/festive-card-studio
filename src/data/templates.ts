@@ -1,9 +1,10 @@
-import type { CardDimensions, CardFormat, CardTemplate, TemplateCategory } from '../types/card';
+import type { CardDimensions, CardFormat, CardMode, CardTemplate, TemplateCategory } from '../types/card';
 
 export const CARD_TEMPLATES: CardTemplate[] = [
   {
     id: 'deepmala',
     name: 'Deepmala',
+    mode: 'personal',
     category: 'Traditional Diwali',
     description: 'Marigold toran, a row of glowing diyas and a classic double gold frame.',
     defaultTextColor: '#fbe9c6',
@@ -12,6 +13,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   {
     id: 'rajwada',
     name: 'Rajwada',
+    mode: 'personal',
     category: 'Royal Gold',
     description: 'Ornate palace-style frame with gilded corners and a royal mandala.',
     defaultTextColor: '#f7e7c1',
@@ -20,6 +22,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   {
     id: 'shuddh',
     name: 'Shuddh',
+    mode: 'personal',
     category: 'Modern Minimal',
     description: 'Calm ivory canvas, one line-art diya and confident left-aligned type.',
     defaultTextColor: '#3a2a20',
@@ -28,6 +31,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   {
     id: 'genda',
     name: 'Genda Phool',
+    mode: 'personal',
     category: 'Floral Diwali',
     description: 'Lush marigold and jasmine clusters framing flowing script lettering.',
     defaultTextColor: '#5a2a12',
@@ -36,6 +40,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   {
     id: 'rangoli',
     name: 'Rangoli Utsav',
+    mode: 'personal',
     category: 'Rangoli Theme',
     description: 'A vibrant hand-drawn rangoli centrepiece on a deep teal night.',
     defaultTextColor: '#e9f6f2',
@@ -44,6 +49,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   {
     id: 'omkar',
     name: 'Omkar',
+    mode: 'personal',
     category: 'Spiritual Diwali',
     description: 'Temple-arch frame, a radiant Om and the soft glow of a single diya.',
     defaultTextColor: '#4a1c06',
@@ -52,6 +58,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   {
     id: 'noir',
     name: 'Swarna Noir',
+    mode: 'personal',
     category: 'Elegant Luxury',
     description: 'Art-deco gold linework on jet black with refined serif typography.',
     defaultTextColor: '#e8dcc0',
@@ -60,6 +67,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   {
     id: 'utsav',
     name: 'Utsav Night',
+    mode: 'personal',
     category: 'Colourful Festive',
     description: 'Fireworks bursting over hanging lanterns in a joyful night sky.',
     defaultTextColor: '#ffffff',
@@ -68,6 +76,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   {
     id: 'madhubani',
     name: 'Madhubani',
+    mode: 'personal',
     category: 'Traditional Indian Art',
     description: 'Folk-art border of fish, peacocks and leaves around a terracotta panel.',
     defaultTextColor: '#3b1a0c',
@@ -76,6 +85,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   {
     id: 'aurora',
     name: 'Aurora Glow',
+    mode: 'personal',
     category: 'Contemporary Gradient',
     description: 'Sunset mesh gradient with a frosted-glass panel and bold outlined type.',
     defaultTextColor: '#ffffff',
@@ -84,6 +94,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   {
     id: 'parivar',
     name: 'Ghar Aangan',
+    mode: 'personal',
     category: 'Family Celebration',
     description: 'A warm home lit with diyas, string lights and lanterns for the whole family.',
     defaultTextColor: '#fff4e0',
@@ -92,14 +103,74 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   {
     id: 'amavasya',
     name: 'Amavasya',
+    mode: 'personal',
     category: 'Premium Dark Theme',
     description: 'Moonless midnight, golden bokeh and one magnificent glowing diya.',
     defaultTextColor: '#e9e2d0',
     swatch: ['#060a1a', '#f5c451'],
   },
+  // ───────────── Business ─────────────
+  {
+    id: 'biz-letterhead-ivory',
+    mode: 'business',
+    name: 'Letterhead Ivory',
+    category: 'Letterhead',
+    description: 'Formal stationery look: logo and company name on top, contact line below.',
+    defaultTextColor: '#3a2a20',
+    swatch: ['#faf6ee', '#7a1424'],
+  },
+  {
+    id: 'biz-letterhead-navy',
+    mode: 'business',
+    name: 'Letterhead Navy',
+    category: 'Letterhead',
+    description: 'Corporate navy and gold letterhead with a framed greeting.',
+    defaultTextColor: '#e4e7f2',
+    swatch: ['#111a3a', '#d4af37'],
+  },
+  {
+    id: 'biz-hero-marigold',
+    mode: 'business',
+    name: 'Marigold Store',
+    category: 'Logo Hero',
+    description: 'Big logo up front with a bright marigold border — made for shops and showrooms.',
+    defaultTextColor: '#5a2a12',
+    swatch: ['#fff3dc', '#f08a1c'],
+  },
+  {
+    id: 'biz-hero-midnight',
+    mode: 'business',
+    name: 'Midnight Premium',
+    category: 'Logo Hero',
+    description: 'Glowing logo on deep midnight with a row of golden diyas.',
+    defaultTextColor: '#ddd5c0',
+    swatch: ['#0a0d1c', '#f3d27a'],
+  },
+  {
+    id: 'biz-signoff-maroon',
+    mode: 'business',
+    name: 'Royal Sign-off',
+    category: 'Sign-off',
+    description: 'Greeting first, then a gold signature strip with logo and contact details.',
+    defaultTextColor: '#fbe9c6',
+    swatch: ['#4f0a16', '#e9b44c'],
+  },
+  {
+    id: 'biz-signoff-minimal',
+    mode: 'business',
+    name: 'Corporate Minimal',
+    category: 'Sign-off',
+    description: 'Clean white, one saffron accent and a modern signature row.',
+    defaultTextColor: '#3d4452',
+    swatch: ['#ffffff', '#c8862a'],
+  },
 ];
 
-export const TEMPLATE_CATEGORIES: TemplateCategory[] = CARD_TEMPLATES.map((t) => t.category);
+export const templatesForMode = (mode: CardMode): CardTemplate[] => CARD_TEMPLATES.filter((t) => t.mode === mode);
+
+export const categoriesForMode = (mode: CardMode): TemplateCategory[] => [...new Set(templatesForMode(mode).map((t) => t.category))];
+
+export const TEMPLATE_CATEGORIES: TemplateCategory[] = categoriesForMode('personal');
 
 export const CARD_DIMENSIONS: Record<CardFormat, CardDimensions> = {
   portrait: { width: 1080, height: 1350, label: 'Portrait · 1080 × 1350' },

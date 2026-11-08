@@ -1,12 +1,20 @@
 import { forwardRef, memo, type ComponentType } from 'react';
-import { CARD_DIMENSIONS } from '../../data/templates';
+import { CARD_DIMENSIONS, getTemplateById } from '../../data/templates';
 import type { CardContent, CardFormat, FireworksLevel, LogoOptions, TemplateId, TextStyleOptions } from '../../types/card';
 import { LogoOverlay } from './LogoOverlay';
-import { CardBackdropContext } from './parts';
+import { CardBackdropContext, CardLogoContext } from './parts';
 import { Fireworks } from './decor/Fireworks';
 import { DeepmalaCard, GendaCard, RajwadaCard, ShuddhCard } from './templates/classicTemplates';
 import { NoirCard, OmkarCard, RangoliCard, UtsavCard } from './templates/festiveTemplates';
 import { AmavasyaCard, AuroraCard, MadhubaniCard, ParivarCard } from './templates/artisticTemplates';
+import {
+  HeroMarigoldCard,
+  HeroMidnightCard,
+  LetterheadIvoryCard,
+  LetterheadNavyCard,
+  SignoffMaroonCard,
+  SignoffMinimalCard,
+} from './templates/businessTemplates';
 import type { TemplateProps } from './templates/types';
 
 const TEMPLATE_COMPONENTS: Record<TemplateId, ComponentType<TemplateProps>> = {
@@ -22,6 +30,12 @@ const TEMPLATE_COMPONENTS: Record<TemplateId, ComponentType<TemplateProps>> = {
   aurora: AuroraCard,
   parivar: ParivarCard,
   amavasya: AmavasyaCard,
+  'biz-letterhead-ivory': LetterheadIvoryCard,
+  'biz-letterhead-navy': LetterheadNavyCard,
+  'biz-hero-marigold': HeroMarigoldCard,
+  'biz-hero-midnight': HeroMidnightCard,
+  'biz-signoff-maroon': SignoffMaroonCard,
+  'biz-signoff-minimal': SignoffMinimalCard,
 };
 
 export interface CardRendererProps {
@@ -53,10 +67,13 @@ export const CardRenderer = memo(
         data-language={content.language}
         style={{ width: dims.width, height: dims.height, position: 'relative', overflow: 'hidden' }}
       >
-        <CardBackdropContext.Provider value={fireworks === 'off' ? null : <Fireworks dims={dims} level={fireworks} />}>
-          <Template content={content} format={format} style={style} dims={dims} />
-        </CardBackdropContext.Provider>
-        {logo && <LogoOverlay logo={logo} dims={dims} />}
+        <CardLogoContext.Provider value={logo ?? null}>
+          <CardBackdropContext.Provider value={fireworks === 'off' ? null : <Fireworks dims={dims} level={fireworks} />}>
+            <Template content={content} format={format} style={style} dims={dims} />
+          </CardBackdropContext.Provider>
+        </CardLogoContext.Provider>
+        {/* Business designs place the logo themselves. */}
+        {logo && logo.position !== 'signature' && getTemplateById(templateId).mode === 'personal' && <LogoOverlay logo={logo} dims={dims} />}
       </div>
     );
   }),

@@ -4,6 +4,8 @@ Create a personalised Diwali greeting card in English, Hindi or Marathi, downloa
 
 **Stack:** React 18 · TypeScript · Vite 6 · Tailwind CSS 4 · Lucide icons · html-to-image
 
+> **New to the project?** Start with the [Developer Handbook](docs/README.md): setup, high- and low-level design with diagrams, and step-by-step guides for common changes.
+
 ## Getting started
 
 ```bash
@@ -23,10 +25,10 @@ npm run preview    # serve the production build
 - **32 wishes in 8 categories**, written in English, Hindi and Marathi. Each wish has the same id in all three languages, so switching language keeps the same wish selected.
 - **Random wish.** It never repeats the wish on screen, and it avoids recently shown wishes until it has used up the pool. It respects the active category filter.
 - **Editable wishes.** You can edit a predefined wish and restore the original later. Edits are saved per language. You can also switch to a fully custom message.
-- **Personalisation.** Name (required), family name (adds "& Family", which is translated) and custom sender text (replaces the "Happy Diwali Wishes From" line). Optional controls: alignment, font, size and colour.
+- **Personalisation.** One name box (required) with a "Sign as" choice: Just me ("John Doe"), Me & family ("John Doe & Family") or Whole family ("Doe Family"); the family wording is translated and custom sender text (replaces the "Happy Diwali Wishes From" line). Optional controls: alignment, font, size and colour.
 - **Live preview.** The preview is the actual export node, rendered at full resolution and scaled with CSS, so the downloaded PNG matches the preview exactly.
 - **Long messages never overflow.** `FitText` uses a binary search to find the font size that fits the box, and it re-measures once web fonts finish loading.
-- **PNG export.** Fonts are embedded, including Devanagari. The PNG is the exact size of the chosen format and gets a meaningful file name such as `Happy-Diwali-Saurabh-Wani.png`. A loading state and an error message are shown.
+- **PNG export.** Fonts are embedded, including Devanagari. The PNG is the exact size of the chosen format and gets a meaningful file name such as `Happy-Diwali-John-Doe.png`. A loading state and an error message are shown.
 - **WhatsApp sharing,** with honest fallbacks:
   1. If the Web Share API supports files (most mobile browsers), the share sheet opens with the image attached, and you pick WhatsApp.
   2. If the browser's user-activation window expired while the image was being generated, a dialog asks for one more tap to share.
@@ -73,7 +75,7 @@ The app was tested end to end in headless Chrome (Playwright):
 - Random wish: no consecutive repeats.
 - Editing a predefined wish, and a custom 500-character message (no overflow).
 - Special characters and emoji; Marathi typed into the custom message.
-- Custom sender text, and an empty family name.
+- Custom sender text, and each "Sign as" option.
 - Text style controls.
 - Mobile layout at 390 px (no horizontal scroll).
 - Every share path: native share success, share expired → retry dialog, user cancel, and the no-Web-Share fallback.

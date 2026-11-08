@@ -1,6 +1,5 @@
 import { flushSync } from 'react-dom';
 import { toCanvas } from 'html-to-image';
-import { ArrayBufferTarget, Muxer } from 'mp4-muxer';
 import { GIFEncoder, applyPalette, quantize } from 'gifenc';
 import { getFontCss } from './imageExport';
 import { FIREWORKS_LOOP_SECONDS, setFireworksFrameTime } from '../components/cards/decor/fireworksClock';
@@ -116,71 +115,4 @@ export const exportCardToGif = async (node: HTMLElement, dims: CardDimensions, o
   );
   gif.finish();
   return new Blob([gif.bytes()], { type: 'image/gif' });
-};
-
-/* ══════════════════════════════════════════════════════════════════════════
- * MP4 — optional HD video for Instagram / Facebook / Reels.
- * ══════════════════════════════════════════════════════════════════════════ */
-
-const MP4_FPS = 20;
-const BITRATE = 6_000_000;
-/** H.264 High / Main / Baseline at level 4.0+ — all cover 1920×1080. */
-const CODECS = ['avc1.640028', 'avc1.4d0028', 'avc1.42002a'];
-
-/** WebCodecs is in Chrome, Edge, Safari 16.4+ and Firefox 130+. */
-export const canExportVideo = () => typeof window !== 'undefined' && 'VideoEncoder' in window && 'VideoFrame' in window;
-
-const pickCodec = async (width: number, height: number): Promise<string> => {
-  for (const codec of CODECS) {
-    try {
-      const { supported } = await VideoEncoder.isConfigSupported({ codec, width, height, bitrate: BITRATE, framerate: MP4_FPS });
-      if (supported) return codec;
-    } catch {
-      /* try next */
-    }
-  }
-  throw new Error('This browser cannot create MP4 videos. Please try Chrome or Edge.');
-};
-
-export const exportCardToVideo = async (node: HTMLElement, dims: CardDimensions, onProgress: (fraction: number) => void): Promise<Blob> => {
-  if (!canExportVideo()) throw new Error('This browser cannot create videos. Please try Chrome, Edge or Safari.');
-  const { width, height } = dims;
-  const codec = await pickCodec(width, height);
-
-  const muxer = new Muxer({
-    target: new ArrayBufferTarget(),
-    video: { codec: 'avc', width, height, frameRate: MP4_FPS },
-    fastStart: 'in-memory',
-  });
-  let encodeError: unknown = null;
-  const encoder = new VideoEncoder({
-    output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
-    error: (e) => {
-      encodeError = e;
-    },
-  });
-  encoder.configure({ codec, width, height, bitrate: BITRATE, framerate: MP4_FPS });
-  const frameUs = 1_000_000 / MP4_FPS;
-
-  try {
-    await renderFrames(
-      node,
-      dims,
-      { fps: MP4_FPS, outW: width, outH: height },
-      async (canvas, i) => {
-        const frame = new VideoFrame(canvas, { timestamp: Math.round(i * frameUs), duration: Math.round(frameUs) });
-        encoder.encode(frame, { keyFrame: i % (MP4_FPS * 2) === 0 });
-        frame.close();
-        if (encodeError) throw encodeError;
-        while (encoder.encodeQueueSize > 3) await new Promise((r) => setTimeout(r, 10));
-      },
-      onProgress,
-    );
-    await encoder.flush();
-    if (encodeError) throw encodeError;
-    muxer.finalize();
-    return new Blob([muxer.target.buffer], { type: 'video/mp4' });
-  } finally {
-    if (encoder.state !== 'closed') encoder.close();
-  }
 };

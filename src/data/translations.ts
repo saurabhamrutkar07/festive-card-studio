@@ -19,6 +19,8 @@ interface CardStrings {
   subheading: string;
   senderIntro: string;
   andFamily: string;
+  /** Used when the whole family signs: "Doe Family". */
+  familyOnly: string;
   shareMessage: string;
   messagePlaceholder: string;
   wishCategories: Record<WishCategory, string>;
@@ -31,6 +33,7 @@ export const TRANSLATIONS: Record<Language, CardStrings> = {
     subheading: 'The Festival of Lights',
     senderIntro: 'Happy Diwali Wishes From',
     andFamily: '& Family',
+    familyOnly: 'Family',
     messagePlaceholder: 'Your heartfelt Diwali message will appear here…',
     shareMessage:
       'Sending you and your family warm wishes for a Happy Diwali! May this festival bring happiness, prosperity and good health.',
@@ -51,6 +54,7 @@ export const TRANSLATIONS: Record<Language, CardStrings> = {
     subheading: 'प्रकाश का पावन पर्व',
     senderIntro: 'दीपावली की शुभकामनाओं सहित',
     andFamily: 'एवं परिवार',
+    familyOnly: 'परिवार',
     messagePlaceholder: 'आपका दीपावली संदेश यहाँ दिखाई देगा…',
     shareMessage:
       'आपको और आपके परिवार को दीपावली की हार्दिक शुभकामनाएँ! यह पर्व आपके जीवन में सुख, समृद्धि और उत्तम स्वास्थ्य लाए।',
@@ -71,6 +75,7 @@ export const TRANSLATIONS: Record<Language, CardStrings> = {
     subheading: 'प्रकाशाचा मंगल सण',
     senderIntro: 'दिवाळीच्या शुभेच्छांसह',
     andFamily: 'व परिवार',
+    familyOnly: 'परिवार',
     messagePlaceholder: 'तुमचा दिवाळी संदेश येथे दिसेल…',
     shareMessage:
       'तुम्हाला आणि तुमच्या कुटुंबाला दिवाळीच्या हार्दिक शुभेच्छा! हा सण तुमच्या आयुष्यात सुख, समृद्धी आणि उत्तम आरोग्य घेऊन येवो.',

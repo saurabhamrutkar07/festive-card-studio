@@ -1,6 +1,6 @@
-/** "Saurabh", "Wani" → "Happy-Diwali-Saurabh-Wani.png" (keeps Devanagari letters). */
-export const buildCardFilename = (name: string, familyName: string): string => {
-  const slug = `${name} ${familyName}`
+/** "John Doe & Family" → "Happy-Diwali-John-Doe-Family.png" (keeps Devanagari letters). */
+export const buildCardFilename = (signature: string): string => {
+  const slug = signature
     .normalize('NFC')
     .replace(/[^\p{L}\p{M}\p{N}]+/gu, '-')
     .replace(/^-+|-+$/g, '')
