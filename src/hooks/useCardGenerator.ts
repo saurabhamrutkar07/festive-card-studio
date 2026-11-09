@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { DEFAULT_WISH_ID, WISHES, getWishById } from '../data/wishes';
+import { DEFAULT_WISH_ID, categoriesForOccasion, getWishById, wishesForOccasion } from '../data/wishes';
+import { getOccasion, occasionDisplayName, occasionText } from '../data/occasions';
 import { t } from '../data/translations';
 import { pickRandomWish } from '../utils/randomWish';
-import { getTemplateById } from '../data/templates';
+import { getTemplateById, templatesFor } from '../data/templates';
 import type {
   BusinessContent,
   BusinessDetails,
@@ -13,6 +14,8 @@ import type {
   Language,
   LogoOptions,
   MessageMode,
+  Occasion,
+  OccasionName,
   SenderDetails,
   SenderTextField,
   SignAs,
@@ -65,7 +68,7 @@ const toBusinessContent = (b: BusinessDetails): BusinessContent => ({
 });
 
 const STORAGE_KEY = 'diwali-card-sender-v1';
-const SIGN_AS: SignAs[] = ['me', 'withFamily', 'family'];
+const SIGN_AS: SignAs[] = ['me', 'withFamily', 'family', 'sister', 'brother'];
 
 const loadSender = (): SenderDetails => {
   try {
@@ -124,18 +127,23 @@ export const DEFAULT_TEXT_STYLE: TextStyleOptions = {
   textColor: 'template',
 };
 
+/** Sister/brother signing only exists for Bhaubij; elsewhere it falls back to "Just me". */
+export const effectiveSignAs = (signAs: SignAs, occasion: Occasion): SignAs =>
+  (signAs === 'sister' || signAs === 'brother') && occasion !== 'bhaubij' ? 'me' : signAs;
+
 /**
  * Builds the sender line from one name box + how the person signs:
- *   me          "John Doe"
- *   withFamily  "John Doe & Family"  /  "John Doe एवं परिवार"
- *   family      "Doe Family"         /  "Doe परिवार"   (last word = surname)
+ *   me / sister / brother  "John Doe"   (sister/brother change the intro line instead)
+ *   withFamily             "John Doe & Family"  /  "John Doe एवं परिवार"
+ *   family                 "Doe Family"         /  "Doe परिवार"   (last word = surname)
  */
-export const formatSenderName = (sender: SenderDetails, lang: Language): string => {
+export const formatSenderName = (sender: SenderDetails, lang: Language, occasion: Occasion = 'diwali'): string => {
   const name = sender.name.trim().replace(/\s+/g, ' ');
   if (!name) return lang === 'en' ? 'Your Name' : lang === 'hi' ? 'आपका नाम' : 'तुमचे नाव';
   const strings = t(lang);
-  if (sender.signAs === 'withFamily') return `${name} ${strings.andFamily}`;
-  if (sender.signAs === 'family') return `${name.split(' ').pop()} ${strings.familyOnly}`;
+  const signAs = effectiveSignAs(sender.signAs, occasion);
+  if (signAs === 'withFamily') return `${name} ${strings.andFamily}`;
+  if (signAs === 'family') return `${name.split(' ').pop()} ${strings.familyOnly}`;
   return name;
 };
 
@@ -155,9 +163,17 @@ export const useCardGenerator = () => {
   const [fireworks, setFireworks] = useState<FireworksLevel>('off');
   const [mode, setModeState] = useState<CardMode>('personal');
   const [business, setBusiness] = useState<BusinessDetails>(loadBusiness);
+  const [occasion, setOccasionState] = useState<Occasion>('diwali');
+  /** Each occasion remembers its own name choice (Padwa / Govardhan Puja, Bhaubij / Bhai Dooj). */
+  const [occasionNames, setOccasionNames] = useState<Record<Occasion, OccasionName>>({ diwali: 'primary', padwa: 'primary', bhaubij: 'primary' });
+  const occasionName = occasionNames[occasion];
+  const setOccasionName = useCallback((n: OccasionName) => setOccasionNames((prev) => ({ ...prev, [occasion]: n })), [occasion]);
+  /** Occasion animation (Padwa petals / Bhaubij aarti glow) on or off. */
+  const [occasionEffectOn, setOccasionEffectOn] = useState(true);
   const recentWishes = useRef<string[]>([]);
-  /** The last design picked in each mode, so switching back restores it. */
-  const lastTemplate = useRef<Record<CardMode, TemplateId>>({ personal: 'deepmala', business: 'biz-letterhead-ivory' });
+  /** The last design picked per mode + occasion, so switching back restores it. */
+  const lastTemplate = useRef<Partial<Record<string, TemplateId>>>({});
+  const templateFor = (m: CardMode, o: Occasion) => lastTemplate.current[`${m}:${o}`] ?? templatesFor(m, o)[0].id;
 
   useEffect(() => {
     try {
@@ -191,9 +207,11 @@ export const useCardGenerator = () => {
 
   const message = messageMode === 'preset' ? presetText : customMessage;
 
+  const occasionWishes = useMemo(() => wishesForOccasion(occasion), [occasion]);
+  const wishCategories = useMemo(() => categoriesForOccasion(occasion), [occasion]);
   const visibleWishes = useMemo(
-    () => (wishCategory === 'all' ? WISHES : WISHES.filter((w) => w.category === wishCategory)),
-    [wishCategory],
+    () => (wishCategory === 'all' ? occasionWishes : occasionWishes.filter((w) => w.category === wishCategory)),
+    [wishCategory, occasionWishes],
   );
 
   const selectWish = useCallback((id: string) => {
@@ -245,48 +263,84 @@ export const useCardGenerator = () => {
     setBusiness((prev) => ({ ...prev, [key]: value.slice(0, BUSINESS_LIMITS[key]) }));
   }, []);
 
-  const selectTemplate = useCallback((id: TemplateId) => {
-    lastTemplate.current[getTemplateById(id).mode] = id;
-    setTemplateId(id);
-  }, []);
+  const selectTemplate = useCallback(
+    (id: TemplateId) => {
+      lastTemplate.current[`${getTemplateById(id).mode}:${occasion}`] = id;
+      setTemplateId(id);
+    },
+    [occasion],
+  );
+
+  /**
+   * Points the wish list at a mode + occasion: business opens the professional
+   * wishes when the occasion has them; the selected wish moves into the new pool.
+   */
+  const syncWishes = useCallback(
+    (m: CardMode, o: Occasion) => {
+      const pool = wishesForOccasion(o);
+      const businessPick = m === 'business' && pool.some((w) => w.category === 'professional');
+      setWishCategory(businessPick ? 'professional' : 'all');
+      const current = getWishById(selectedWishId);
+      const fits = current?.occasion === o && (!businessPick || current.category === 'professional');
+      if (!fits) setSelectedWishId((businessPick ? pool.find((w) => w.category === 'professional') : pool[0])?.id ?? DEFAULT_WISH_ID);
+    },
+    [selectedWishId],
+  );
 
   /** Switching to Business opens its designs and the professional wishes. */
   const setMode = useCallback(
     (next: CardMode) => {
       if (next === mode) return;
       setModeState(next);
-      setTemplateId(lastTemplate.current[next]);
-      if (next === 'business') {
-        setWishCategory('professional');
-        if (getWishById(selectedWishId)?.category !== 'professional') setSelectedWishId('professional-1');
-      } else {
-        setWishCategory('all');
-      }
+      setTemplateId(templateFor(next, occasion));
+      syncWishes(next, occasion);
     },
-    [mode, selectedWishId],
+    // templateFor only reads a ref
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [mode, occasion, syncWishes],
+  );
+
+  /** Switching occasion swaps designs, wishes and animation; Diwali stays as it was. */
+  const setOccasion = useCallback(
+    (next: Occasion) => {
+      if (next === occasion) return;
+      setOccasionState(next);
+      setTemplateId(templateFor(mode, next));
+      syncWishes(mode, next);
+      setOccasionEffectOn(true);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [occasion, mode, syncWishes],
   );
 
   const strings = t(language);
+  const text = occasionText(occasion, occasionName, language);
+  const signAs = effectiveSignAs(sender.signAs, occasion);
 
   const content: CardContent = useMemo(() => {
+    const siblingIntro = signAs === 'sister' ? strings.fromSister : signAs === 'brother' ? strings.fromBrother : null;
     const base = {
-      heading: strings.heading,
-      subheading: strings.subheading,
-      message: message.trim() || strings.messagePlaceholder,
-      senderIntro: sender.customSenderText.trim() || strings.senderIntro,
+      heading: text.heading,
+      subheading: text.subheading,
+      message: message.trim() || text.messagePlaceholder,
+      senderIntro: sender.customSenderText.trim() || siblingIntro || text.senderIntro,
       language,
     };
-    if (mode === 'personal') return { ...base, senderName: formatSenderName(sender, language) };
+    if (mode === 'personal') return { ...base, senderName: formatSenderName(sender, language, occasion) };
     return {
       ...base,
-      senderIntro: business.signoff.trim() || strings.senderIntro,
+      senderIntro: business.signoff.trim() || text.senderIntro,
       senderName: business.name.trim() || BUSINESS_PLACEHOLDER[language],
       business: toBusinessContent(business),
     };
-  }, [strings, message, sender, language, mode, business]);
+  }, [strings, text, signAs, message, sender, language, mode, business, occasion]);
 
   /** How the card is signed: the person/family, or the business name. */
-  const signature = mode === 'business' ? business.name.trim() : sender.name.trim() ? formatSenderName(sender, language) : '';
+  const signature = mode === 'business' ? business.name.trim() : sender.name.trim() ? formatSenderName(sender, language, occasion) : '';
+
+  const meta = getOccasion(occasion);
+  /** The occasion animation currently showing, if any. */
+  const effect = meta.effect && occasionEffectOn ? meta.effect.kind : null;
 
   const messageIsEmpty = message.trim().length === 0;
 
@@ -311,8 +365,19 @@ export const useCardGenerator = () => {
     visibleWishes,
     content,
     messageIsEmpty,
-    shareMessage: strings.shareMessage,
+    shareMessage: text.shareMessage,
+    headingShort: text.headingShort,
+    occasion,
+    occasionName,
+    occasionLabel: occasionDisplayName(occasion, occasionName),
+    filePrefix: meta.filePrefix[occasionName],
+    occasionEffectOn,
+    effect,
+    wishCategories,
     // actions
+    setOccasion,
+    setOccasionName,
+    setOccasionEffectOn,
     setTemplateId: selectTemplate,
     setMode,
     updateBusiness,

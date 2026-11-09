@@ -8,14 +8,17 @@ This page explains **how the code works, file by file**. Keep `src/types/card.ts
 
 | Type | What it represents | Example |
 |---|---|---|
+| `Occasion` | Which festival day | `'diwali' \| 'padwa' \| 'bhaubij'` |
+| `OccasionName` | Which regional name the user picked | `'primary'` (Diwali Padwa / Bhaubij) or `'alternate'` (Govardhan Puja / Bhai Dooj) |
+| `OccasionEffect` | The occasion's own animation | `'petals'` (Padwa) \| `'aarti'` (Bhaubij) |
 | `CardMode` | Personal or business card | `'personal'` |
 | `TemplateId` | Which design | `'deepmala'`, `'biz-letterhead-ivory'` |
-| `CardTemplate` | Gallery info for a design (name, category, mode, swatch) | entries in `data/templates.ts` |
+| `CardTemplate` | Gallery info for a design (name, category, mode, **occasions**, swatch) | entries in `data/templates.ts` |
 | `CardFormat` | Card size | `'portrait' \| 'square' \| 'landscape'` |
 | `Language` | Card language | `'en' \| 'hi' \| 'mr'` |
-| `Wish` | A ready-made message in all 3 languages | entries in `data/wishes.ts` |
+| `Wish` | A ready-made message in all 3 languages, tagged with its `occasion` | `data/wishes.ts`, `data/occasionWishes.ts` |
 | `SenderDetails` | Personal signer: `name`, `signAs`, `customSenderText` | `{ name: 'John Doe', signAs: 'withFamily' }` |
-| `SignAs` | How a person signs | `'me' \| 'withFamily' \| 'family'` |
+| `SignAs` | How a person signs | `'me' \| 'withFamily' \| 'family' \| 'sister' \| 'brother'` (last two on Bhaubij only) |
 | `BusinessDetails` | Business form: name, tagline, phone, website, address, signoff | — |
 | `LogoOptions` | Uploaded logo + `shape`, `size`, `position`, `backdrop` | — |
 | `TextStyleOptions` | User's text style: font, size, colour, alignment | — |
@@ -51,6 +54,9 @@ This one hook holds **all** card state. `App.tsx` calls it once: `const card = u
 
 | State | Default | Saved in browser? |
 |---|---|---|
+| `occasion` | `'diwali'` | no |
+| `occasionNames` | `'primary'` for every occasion — **remembered per occasion** | no |
+| `occasionEffectOn` | `true` (switched back on when the occasion changes) | no |
 | `mode` | `'personal'` | no |
 | `templateId` | `'deepmala'` | no |
 | `format` | `'portrait'` | no |
@@ -70,7 +76,8 @@ flowchart LR
     N -->|personal| F1[formatSenderName<br/>'John Doe & Family']
     N -->|business| F2[business.name<br/>+ toBusinessContent]
     W[selected wish or<br/>custom message] --> M[message]
-    L[language] --> TR[translations:<br/>heading, subheading,<br/>senderIntro]
+    O[occasion + chosen name] --> TR
+    L[language] --> TR[occasionText:<br/>heading, subheading,<br/>senderIntro, share text]
     F1 --> C[CardContent]
     F2 --> C
     M --> C
@@ -83,8 +90,11 @@ flowchart LR
 
 | Action | What it does |
 |---|---|
-| `setMode(m)` | Switches mode, restores the last template used in that mode, and for business opens the *professional* wishes |
-| `setTemplateId(id)` | Selects a design (remembers it per mode) |
+| `setOccasion(o)` | Switches occasion: restores the last design used for that mode + occasion, moves the wish list to the occasion's wishes, switches the occasion animation on |
+| `setOccasionName(n)` | Picks the regional name **for the current occasion only** (e.g. Bhai Dooj doesn't change Padwa) |
+| `setOccasionEffectOn(b)` | Turns the occasion animation on/off |
+| `setMode(m)` | Switches mode, restores the last template used in that mode + occasion, and for business opens the *professional* wishes when the occasion has them |
+| `setTemplateId(id)` | Selects a design (remembered per mode + occasion) |
 | `updateSender(key, v)` / `setSignAs(v)` | Personal form |
 | `updateBusiness(key, v)` | Business form (length-limited by `BUSINESS_LIMITS`) |
 | `selectWish`, `randomWish`, `editPreset`, `resetPreset`, `setCustomMessage` | Message handling |
@@ -98,6 +108,9 @@ flowchart LR
 | `me` | John Doe | John Doe |
 | `withFamily` | John Doe & Family | John Doe एवं परिवार |
 | `family` | Doe Family *(last word of the name)* | Doe परिवार |
+| `sister` / `brother` *(Bhaubij)* | name only — the **intro line** becomes "With love, your sister / brother" | intro "ढेर सारे प्यार के साथ, तुम्हारी बहन" |
+
+`effectiveSignAs()` turns `sister` / `brother` back into `me` on Diwali and Padwa, so a choice made on Bhaubij never leaks onto other cards.
 
 ---
 
@@ -109,6 +122,7 @@ flowchart TD
     App --> HeroSection
     App --> HowItWorks
     App --> Studio[Card Studio section]
+    Studio --> OccasionPicker
     Studio --> ModeSwitch
     Studio --> Step1[Step 1 panel]
     Step1 --> CardFormatSelector
@@ -127,7 +141,9 @@ flowchart TD
     App --> Toast
 ```
 
-- **`TemplateGallery`** shows the designs for the current `mode` (`templatesForMode(mode)`) using sample content.
+- **`OccasionPicker`** shows Diwali · Padwa · Bhaubij and, for Padwa/Bhaubij, the "Call it" name chips.
+- **`TemplateGallery`** shows the designs for the current mode **and occasion** (`templatesFor(mode, occasion)`) using occasion-appropriate sample content.
+- **`FireworksSelector`** shows the occasion animation switch (when the occasion has one) above the fireworks choice.
 - **`LiveCardPreview`** holds `cardRef` — a React ref pointing at the real card DOM node. Export functions photograph exactly this node, so **preview = download**.
 - **`ScaledCard`** shows the full-size card (e.g. 1080×1350) shrunk with CSS `transform: scale()` to fit the screen. The card itself never changes size.
 
@@ -176,7 +192,10 @@ flowchart TD
 
 ---
 
-## 3.5 Fireworks (`decor/Fireworks.tsx`, `decor/fireworksClock.ts`, `index.css`)
+## 3.5 Animations: fireworks and occasion effects
+
+Files: `decor/Fireworks.tsx`, `decor/OccasionEffects.tsx`, `decor/fireworksClock.ts`, keyframes in `index.css`.
+`CardRenderer` passes both to every template through `CardBackdropContext`, so they sit **behind** the art and text.
 
 ```mermaid
 flowchart LR
@@ -192,6 +211,18 @@ flowchart LR
 - **GIF export** sets a global clock (`setFireworksFrameTime(t)`) → `Fireworks` re-renders the exact moment `t` using JS copies of the keyframes (`burstFrame`, `rocketFrame`, `sparkFrame`).
 - **Seamless loop:** every animation duration divides `FIREWORKS_LOOP_SECONDS` (4 s), so the GIF loops without a jump.
 - Bursts are timed to be *open at t = 0*, so the first frame (used as chat thumbnail) looks complete.
+
+**Occasion effects (`OccasionEffects.tsx`)** follow the same contract:
+
+| Kind | Occasion | What moves | CSS classes | JS frame functions |
+|---|---|---|---|---|
+| `petals` | Padwa | Marigold petals and gold coins fall, sway and spin | `.fx-fall` | `fallFrame` |
+| `aarti` | Bhaubij | A warm glow pulses at the bottom; embers and petals rise | `.fx-pulse`, `.fx-fall` | `pulseFrame`, `fallFrame` |
+
+- Particles only travel in the **outer 16% on each side** of the card, so they never drift behind the message.
+- Each particle's fall distance is passed to CSS as variables (`--fx-from`, `--fx-to`, `--fx-sway`, `--fx-spin`).
+- Every duration is exactly `FIREWORKS_LOOP_SECONDS` (4 s) so the GIF still loops seamlessly.
+- The card exports as a GIF when **fireworks or the occasion effect** is on.
 
 ---
 
@@ -273,22 +304,26 @@ flowchart LR
 |---|---|---|
 | `App.tsx` | Page layout, steps, validation, download/share handlers | Adding a page section or a new step; changing button behaviour |
 | `types/card.ts` | All data types | Adding any new field/option (always start here) |
-| `data/templates.ts` | Design list (name, category, mode), card sizes | Adding/renaming a design |
-| `data/wishes.ts` | 32 wishes × 3 languages | Adding/editing messages |
+| `data/occasions.ts` | Occasion list, regional names, animation, filename prefix, card text per occasion × name × language | Adding an occasion; changing headings/share text |
+| `data/templates.ts` | Design list (name, category, mode, occasions), card sizes, `templatesFor(mode, occasion)` | Adding/renaming a design |
+| `data/wishes.ts` | 32 Diwali wishes + helpers (`wishesForOccasion`, `categoriesForOccasion`) | Adding/editing Diwali messages |
+| `data/occasionWishes.ts` | 10 Padwa + 10 Bhaubij wishes × 3 languages | Adding/editing Padwa/Bhaubij messages |
 | `data/translations.ts` | Card text + labels per language | Changing wording; adding a language |
 | `data/contact.ts` | Owner's name, WhatsApp, email | Changing contact details |
 | `hooks/useCardGenerator.ts` | All state + `CardContent` | New option that affects the card |
 | `hooks/useCardExport.ts` | Export state (busy, progress) | New export format |
 | `components/cards/CardRenderer.tsx` | Template registry + logo/fireworks layers | Registering a new template |
 | `components/cards/parts.tsx` | Shared template building blocks | Changing something for *all* personal templates |
-| `components/cards/templates/*.tsx` | The designs | Creating/changing a design |
-| `components/cards/decor/*.tsx` | SVG art (lamps, florals, patterns, scenes, fireworks) | New decorations |
+| `components/cards/templates/*.tsx` | The designs: classic/festive/artistic (Diwali), `businessTemplates`, `occasionTemplates` (first Padwa/Bhaubij set + shared `TextColumn`, `useScale`), `moreOccasionTemplates` (3 more per occasion) | Creating/changing a design |
+| `components/cards/decor/*.tsx` | SVG art: lamps, florals, patterns, scenes, fireworks, `occasionDecor` (aarti thali, gold coin, kalash, gift box, river), `festiveDecor` (star kandil, Lakshmi feet, phuljhadi, coin stack, bahi-khata, tilak, sweets plate), `OccasionEffects` | New decorations or animations |
+| `components/OccasionPicker.tsx` | Occasion buttons + "Call it" name chips | Occasion picker UI |
 | `components/PersonalisationForm.tsx` | Step 3 form (personal + business + text style) | New form field |
 | `components/LogoUploader.tsx` | Step 4 logo upload + shape | Logo options |
-| `components/TemplateGallery.tsx` | Step 1 gallery + sample content | Gallery filters/sample text |
+| `components/TemplateGallery.tsx` | Step 1 gallery + sample content per mode and occasion | Gallery filters/sample text |
+| `components/FireworksSelector.tsx` | Occasion animation switch + fireworks choice | Animation controls |
 | `utils/imageExport.ts` / `animationExport.ts` | PNG / GIF creation | Export quality, size, speed |
 | `utils/whatsappShare.ts` | Web Share API + wa.me links | Share behaviour |
-| `utils/filename.ts` | Download filename | Filename format |
-| `index.css` | Fonts, Tailwind theme, fireworks keyframes, Hindi letter-spacing fix | Global styles, animations |
+| `utils/filename.ts` | Download filename with the occasion prefix (`Happy-Bhai-Dooj-Priya.gif`) | Filename format |
+| `index.css` | Fonts, Tailwind theme, fireworks + occasion-effect keyframes, Hindi letter-spacing fix | Global styles, animations |
 
 Next: [How-to guides →](04-how-to-guides.md)

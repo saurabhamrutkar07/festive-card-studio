@@ -1,10 +1,11 @@
-import type { Wish, WishCategory } from '../types/card';
+import type { Occasion, Wish, WishCategory } from '../types/card';
+import { BHAUBIJ_WISHES, PADWA_WISHES } from './occasionWishes';
 
 /**
  * 32 wishes across 8 categories. Every wish shares one id across all three
  * languages so that switching language keeps the same sentiment selected.
  */
-export const WISHES: Wish[] = [
+const DIWALI_WISHES: Omit<Wish, 'occasion'>[] = [
   // ───────────── Traditional ─────────────
   {
     id: 'traditional-1',
@@ -310,7 +311,14 @@ export const WISHES: Wish[] = [
   },
 ];
 
+/** Every wish across all occasions. */
+export const WISHES: Wish[] = [...DIWALI_WISHES.map((w) => ({ ...w, occasion: 'diwali' as const })), ...PADWA_WISHES, ...BHAUBIJ_WISHES];
+
+/** Display order of category chips; only categories an occasion has are shown. */
 export const WISH_CATEGORIES: WishCategory[] = [
+  'spouse',
+  'forBrother',
+  'forSister',
   'traditional',
   'family',
   'friends',
@@ -324,3 +332,10 @@ export const WISH_CATEGORIES: WishCategory[] = [
 export const DEFAULT_WISH_ID = WISHES[0].id;
 
 export const getWishById = (id: string): Wish | undefined => WISHES.find((w) => w.id === id);
+
+export const wishesForOccasion = (occasion: Occasion): Wish[] => WISHES.filter((w) => w.occasion === occasion);
+
+export const categoriesForOccasion = (occasion: Occasion): WishCategory[] => {
+  const present = new Set(wishesForOccasion(occasion).map((w) => w.category));
+  return WISH_CATEGORIES.filter((c) => present.has(c));
+};

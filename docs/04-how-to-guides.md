@@ -88,27 +88,24 @@ That's it — the wish picker, categories and "Random wish" pick it up automatic
 
 ---
 
-## 5. Add a new festival (the "universal" plan)
+## 5. Add a new occasion (festival day)
 
-> **Status:** not built yet. The app is Diwali-only today. This is the agreed plan so the work can be split into tasks.
+> **Status:** built. The app has **Diwali**, **Diwali Padwa** and **Bhaubij**. Follow the same pattern to add Holi, Eid, Christmas and so on.
 
-Diwali-specific things live in these places today:
+| Step | File | What to do |
+|---|---|---|
+| 1 | `src/types/card.ts` | Add the id to `Occasion` (e.g. `'holi'`). If it needs its own animation, add it to `OccasionEffect`. |
+| 2 | `src/data/occasions.ts` | Add an entry to `OCCASIONS` (label, native label, optional two regional `names`, optional `effect`, `filePrefix`) and its text table (heading, sub-heading, sender intro, placeholder, share message × every language × each name). Return it from `occasionText`. |
+| 3 | `src/data/occasionWishes.ts` + `wishes.ts` | Add a wish list with `occasion: 'holi'` and spread it into `WISHES`. New categories need `WishCategory`, `WISH_CATEGORIES` and labels in `translations.ts`. |
+| 4 | `src/data/templates.ts` | Add personal designs with `occasions: ['holi']`. Add `'holi'` to the business templates' `occasions` if they suit it. |
+| 5 | `src/components/cards/templates/occasionTemplates.tsx` | Write the designs; reuse `TextColumn` and `useScale`. Register them in `CardRenderer.tsx`. |
+| 6 | Animation (optional) | Add a `kind` to `decor/OccasionEffects.tsx` (particles + JS frame function) and its CSS keyframes in `index.css`. Every duration must divide the 4 s loop. |
 
-| What | Where |
-|---|---|
-| Card heading/subheading ("Happy Diwali!") | `data/translations.ts` |
-| Wishes mentioning Diwali/diyas | `data/wishes.ts` |
-| Diya/rangoli decorations in designs | `components/cards/decor/*`, `templates/*` |
-| "Happy-Diwali-…" filename | `utils/filename.ts` |
-| Page text (hero, navbar, footer, studio title) | `HeroSection.tsx`, `Navbar.tsx`, `Footer.tsx`, `App.tsx` |
+The occasion picker, wish categories, gallery, filename and share text all update automatically from the config.
 
-**Recommended approach:**
-1. Add `type Festival = 'diwali' | 'holi' | …` in `types/card.ts`.
-2. Create `src/data/festivals.ts`: per festival → heading/subheading per language, wish list, allowed templates, colours, filename prefix.
-3. Add `festival` state to `useCardGenerator` and use the festival config when building `CardContent`.
-4. Move the current Diwali text and wishes into the `diwali` entry (the app must look identical after this step — ship it alone first).
-5. Add a festival picker to the UI.
-6. Add the new festival's data; business templates already work for any festival (only the heading/decor change).
+**How it flows:** `OccasionPicker` → `useCardGenerator.setOccasion()` → designs (`templatesFor(mode, occasion)`), wishes (`wishesForOccasion`), card text (`occasionText(occasion, name, language)`) and the animation (`getOccasion(occasion).effect`).
+
+**Bhaubij extras:** "Sign as" offers *From sister / From brother*. These change the intro line (e.g. "With love, your sister") and fall back to "Just me" on other occasions (`effectiveSignAs`).
 
 ---
 

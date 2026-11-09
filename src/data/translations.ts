@@ -24,6 +24,9 @@ interface CardStrings {
   shareMessage: string;
   messagePlaceholder: string;
   wishCategories: Record<WishCategory, string>;
+  /** Bhaubij "Sign as" intro lines, e.g. "With love, your sister". */
+  fromSister: string;
+  fromBrother: string;
 }
 
 export const TRANSLATIONS: Record<Language, CardStrings> = {
@@ -46,7 +49,12 @@ export const TRANSLATIONS: Record<Language, CardStrings> = {
       inspirational: 'Inspirational',
       spiritual: 'Spiritual',
       prosperity: 'Prosperity & Happiness',
+      spouse: 'For Spouse',
+      forBrother: 'For Brother',
+      forSister: 'For Sister',
     },
+    fromSister: 'With love, your sister',
+    fromBrother: 'With love, your brother',
   },
   hi: {
     heading: 'दीपावली की हार्दिक शुभकामनाएँ!',
@@ -67,7 +75,12 @@ export const TRANSLATIONS: Record<Language, CardStrings> = {
       inspirational: 'प्रेरणादायक',
       spiritual: 'आध्यात्मिक',
       prosperity: 'समृद्धि और खुशी',
+      spouse: 'जीवनसाथी के लिए',
+      forBrother: 'भाई के लिए',
+      forSister: 'बहन के लिए',
     },
+    fromSister: 'ढेर सारे प्यार के साथ, तुम्हारी बहन',
+    fromBrother: 'ढेर सारे प्यार के साथ, तुम्हारा भाई',
   },
   mr: {
     heading: 'दिवाळीच्या हार्दिक शुभेच्छा!',
@@ -88,7 +101,12 @@ export const TRANSLATIONS: Record<Language, CardStrings> = {
       inspirational: 'प्रेरणादायी',
       spiritual: 'आध्यात्मिक',
       prosperity: 'समृद्धी व आनंद',
+      spouse: 'जोडीदारासाठी',
+      forBrother: 'भावासाठी',
+      forSister: 'बहिणीसाठी',
     },
+    fromSister: 'खूप प्रेमाने, तुझी बहीण',
+    fromBrother: 'खूप प्रेमाने, तुझा भाऊ',
   },
 };
 

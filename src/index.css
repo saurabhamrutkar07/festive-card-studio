@@ -169,9 +169,37 @@
   0%, 100% { transform: scale(0.55); opacity: 0.25; }
   50% { transform: scale(1); opacity: 1; }
 }
+/* Occasion effects (components/cards/decor/OccasionEffects.tsx). */
+.fx-fall {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation-name: fx-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.fx-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation-name: fx-pulse;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+@keyframes fx-fall {
+  0% { transform: translate(0px, var(--fx-from)) rotate(0deg); }
+  25% { transform: translate(var(--fx-sway), calc(var(--fx-from) + (var(--fx-to) - var(--fx-from)) * 0.25)) rotate(calc(var(--fx-spin) * 0.25)); }
+  50% { transform: translate(0px, calc(var(--fx-from) + (var(--fx-to) - var(--fx-from)) * 0.5)) rotate(calc(var(--fx-spin) * 0.5)); }
+  75% { transform: translate(calc(var(--fx-sway) * -1), calc(var(--fx-from) + (var(--fx-to) - var(--fx-from)) * 0.75)) rotate(calc(var(--fx-spin) * 0.75)); }
+  100% { transform: translate(0px, var(--fx-to)) rotate(var(--fx-spin)); }
+}
+@keyframes fx-pulse {
+  0%, 100% { transform: scale(0.92); opacity: 0.55; }
+  50% { transform: scale(1.04); opacity: 0.95; }
+}
 [data-exporting] .fx-burst,
 [data-exporting] .fx-rocket,
-[data-exporting] .fx-spark {
+[data-exporting] .fx-spark,
+[data-exporting] .fx-fall,
+[data-exporting] .fx-pulse {
   animation: none !important;
 }
 

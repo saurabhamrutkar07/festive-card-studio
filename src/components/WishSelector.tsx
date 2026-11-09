@@ -1,6 +1,5 @@
 import { memo } from 'react';
 import { Check, PenLine, ScrollText } from 'lucide-react';
-import { WISH_CATEGORIES } from '../data/wishes';
 import { t } from '../data/translations';
 import type { Language, MessageMode, Wish, WishCategory } from '../types/card';
 import { RandomWishButton } from './RandomWishButton';
@@ -11,6 +10,8 @@ interface Props {
   mode: MessageMode;
   onModeChange: (m: MessageMode) => void;
   category: WishCategory | 'all';
+  /** Categories that exist for the current occasion. */
+  categories: WishCategory[];
   onCategoryChange: (c: WishCategory | 'all') => void;
   wishes: Wish[];
   selectedId: string;
@@ -58,7 +59,7 @@ export const WishSelector = memo((p: Props) => {
             <span className="text-xs text-cream-100/45">{p.wishes.length} wishes{p.category !== 'all' ? ` in “${labels[p.category]}”` : ''}</span>
           </div>
           <div className="scrollbar-thin -mx-1 flex gap-2 overflow-x-auto px-1 pb-2">
-            {(['all', ...WISH_CATEGORIES] as const).map((c) => (
+            {(['all', ...p.categories] as const).map((c) => (
               <button
                 key={c}
                 type="button"
@@ -69,7 +70,7 @@ export const WishSelector = memo((p: Props) => {
               </button>
             ))}
           </div>
-          <ul className="scrollbar-thin max-h-80 space-y-2 overflow-y-auto pr-1" role="listbox" aria-label="Diwali wishes">
+          <ul className="scrollbar-thin max-h-80 space-y-2 overflow-y-auto pr-1" role="listbox" aria-label="Wishes">
             {p.wishes.map((w) => {
               const active = w.id === p.selectedId;
               return (

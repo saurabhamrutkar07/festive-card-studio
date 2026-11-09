@@ -1,8 +1,13 @@
 import { memo, useState } from 'react';
 import { AlignCenter, AlignLeft, AlignRight, ChevronDown, Palette, RotateCcw, Wand2 } from 'lucide-react';
-import { BUSINESS_LIMITS, LIMITS } from '../hooks/useCardGenerator';
+import { BUSINESS_LIMITS, LIMITS, effectiveSignAs } from '../hooks/useCardGenerator';
 import { USER_FONT_OPTIONS } from './cards/typography';
-import type { BusinessDetails, CardMode, FontScale, FontStyle, SenderDetails, SenderTextField, SignAs, TextAlign, TextStyleOptions } from '../types/card';
+import type { BusinessDetails, CardMode, Occasion, FontScale, FontStyle, SenderDetails, SenderTextField, SignAs, TextAlign, TextStyleOptions } from '../types/card';
+
+const SIBLING_SIGN_AS: { v: SignAs; label: string; example: string }[] = [
+  { v: 'sister', label: 'From sister', example: 'Your loving sister' },
+  { v: 'brother', label: 'From brother', example: 'Your loving brother' },
+];
 
 const SIGN_AS_OPTIONS: { v: SignAs; label: string; example: string }[] = [
   { v: 'me', label: 'Just me', example: 'John Doe' },
@@ -27,6 +32,8 @@ interface Props {
   sender: SenderDetails;
   onSenderChange: (key: SenderTextField, value: string) => void;
   onSignAsChange: (value: SignAs) => void;
+  /** Bhaubij adds "From sister / From brother" signing. */
+  occasion: Occasion;
   textStyle: TextStyleOptions;
   onStyleChange: <K extends keyof TextStyleOptions>(key: K, value: TextStyleOptions[K]) => void;
   onResetStyle: () => void;
@@ -97,6 +104,7 @@ export const PersonalisationForm = memo(
     sender,
     onSenderChange,
     onSignAsChange,
+    occasion,
     business,
     onBusinessChange,
     textStyle,
@@ -178,8 +186,8 @@ export const PersonalisationForm = memo(
         <div>
           <span className="mb-2 block text-sm font-medium text-cream-100/85">Sign as</span>
           <div role="radiogroup" aria-label="Sign as" className="grid grid-cols-3 gap-1 rounded-lg border border-gold-400/15 bg-black/25 p-1">
-            {SIGN_AS_OPTIONS.map(({ v, label, example }) => {
-              const active = sender.signAs === v;
+            {(occasion === 'bhaubij' ? [...SIGN_AS_OPTIONS, ...SIBLING_SIGN_AS] : SIGN_AS_OPTIONS).map(({ v, label, example }) => {
+              const active = effectiveSignAs(sender.signAs, occasion) === v;
               return (
                 <button
                   key={v}

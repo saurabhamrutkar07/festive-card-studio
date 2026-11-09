@@ -12,6 +12,10 @@ import { LiveCardPreview } from './components/LiveCardPreview';
 import { LogoUploader } from './components/LogoUploader';
 import { FireworksSelector } from './components/FireworksSelector';
 import { ModeSwitch } from './components/ModeSwitch';
+import { OccasionPicker } from './components/OccasionPicker';
+import { getOccasion } from './data/occasions';
+import { templatesFor } from './data/templates';
+import { wishesForOccasion } from './data/wishes';
 import { exportMime, type ExportKind, type ExportPurpose } from './hooks/useCardExport';
 import { DownloadButton } from './components/DownloadButton';
 import { WhatsAppShareButton } from './components/WhatsAppShareButton';
@@ -25,7 +29,6 @@ import { useCardExport } from './hooks/useCardExport';
 import { downloadBlob } from './utils/imageExport';
 import { buildCardFilename } from './utils/filename';
 import { buildWhatsAppUrl, canShareImageFile, isMobileDevice, shareImageFile } from './utils/whatsappShare';
-import { t } from './data/translations';
 
 const focusField = (id: string) => {
   const el = document.getElementById(id);
@@ -49,7 +52,12 @@ export default function App() {
   const closeDialog = useCallback(() => setDialog(null), []);
 
   const isBusiness = card.mode === 'business';
-  const filename = buildCardFilename(isBusiness ? card.business.name.trim() : card.sender.name.trim() ? formatSenderName(card.sender, 'en') : '');
+  const occasionEffectMeta = getOccasion(card.occasion).effect;
+  const designCount = templatesFor(card.mode, card.occasion).length;
+  const filename = buildCardFilename(
+    isBusiness ? card.business.name.trim() : card.sender.name.trim() ? formatSenderName(card.sender, 'en', card.occasion) : '',
+    card.filePrefix,
+  );
   const shareText = `${card.shareMessage}\n\n— ${card.signature || card.content.senderName}`;
 
   const validate = (): boolean => {
@@ -69,7 +77,8 @@ export default function App() {
   };
 
   /** With fireworks on, the main download/share is an animated GIF (autoplays in chats). */
-  const animated = card.fireworks !== 'off';
+  /** Fireworks or the occasion animation make the card export as an animated GIF. */
+  const animated = card.fireworks !== 'off' || card.effect !== null;
   const fileFor = (kind: ExportKind) => filename.replace(/\.png$/, `.${kind}`);
 
   const exportFailed = (err: unknown, kind: ExportKind) => {
@@ -116,9 +125,9 @@ export default function App() {
       fallbackToManual(blob);
       return;
     }
-    const title = t(card.language).headingShort;
+    const title = card.headingShort;
     const result = await shareImageFile(file, shareText, title);
-    if (result === 'shared') notify('success', 'Your card was shared. Happy Diwali!');
+    if (result === 'shared') notify('success', `Your card was shared. ${card.headingShort}!`);
     else if (result === 'unsupported') fallbackToManual(blob);
     else if (result === 'needs-gesture') {
       setDialog({
@@ -128,7 +137,7 @@ export default function App() {
         onShare: async () => {
           setDialog(null);
           const retry = await shareImageFile(file, shareText, title);
-          if (retry === 'shared') notify('success', 'Your card was shared. Happy Diwali!');
+          if (retry === 'shared') notify('success', `Your card was shared. ${card.headingShort}!`);
           else if (retry !== 'cancelled') fallbackToManual(blob);
         },
         onFallback: () => fallbackToManual(blob),
@@ -146,9 +155,10 @@ export default function App() {
         <section id="create" className="mx-auto max-w-7xl scroll-mt-20 px-4 pb-20 sm:px-6">
           <div className="mb-8 text-center">
             <p className="text-sm font-semibold uppercase tracking-[0.25em] text-gold-400/80">Card Studio</p>
-            <h2 className="mt-2 font-display text-3xl font-semibold text-cream-50 sm:text-4xl">Design your Diwali greeting</h2>
+            <h2 className="mt-2 font-display text-3xl font-semibold text-cream-50 sm:text-4xl">Design your {card.occasionLabel} greeting</h2>
             <p className="mx-auto mt-3 max-w-xl text-cream-100/60">Every change appears instantly in the live preview.</p>
-            <div className="mt-6">
+            <div className="mt-6 space-y-4">
+              <OccasionPicker occasion={card.occasion} name={card.occasionName} onOccasionChange={card.setOccasion} onNameChange={card.setOccasionName} />
               <ModeSwitch
                 value={card.mode}
                 onChange={(m) => {
@@ -165,19 +175,41 @@ export default function App() {
                 <SectionHeader
                   step={1}
                   title="Choose a design"
-                  subtitle={isBusiness ? '6 business designs built around your logo · pick your card size' : '12 handcrafted templates · pick your card size'}
+                  subtitle={
+                    isBusiness
+                      ? `${designCount} business designs built around your logo · pick your card size`
+                      : `${designCount} ${card.occasionLabel} designs · pick your card size`
+                  }
                 />
                 <div className="mb-5">
                   <CardFormatSelector value={card.format} onChange={card.setFormat} />
                 </div>
-                <TemplateGallery key={card.mode} mode={card.mode} selectedId={card.templateId} language={card.language} onSelect={card.setTemplateId} />
+                <TemplateGallery
+                  key={`${card.mode}:${card.occasion}`}
+                  mode={card.mode}
+                  occasion={card.occasion}
+                  selectedId={card.templateId}
+                  language={card.language}
+                  onSelect={card.setTemplateId}
+                />
                 <div className="mt-5">
-                  <FireworksSelector value={card.fireworks} onChange={card.setFireworks} />
+                  <FireworksSelector
+                    value={card.fireworks}
+                    onChange={card.setFireworks}
+                    animated={animated}
+                    occasionEffect={
+                      occasionEffectMeta ? { label: occasionEffectMeta.label, on: card.occasionEffectOn, onToggle: card.setOccasionEffectOn } : undefined
+                    }
+                  />
                 </div>
               </div>
 
               <div id="wishes" className="panel scroll-mt-20">
-                <SectionHeader step={2} title="Choose your wish" subtitle="32 heartfelt wishes in 8 categories" />
+                <SectionHeader
+                  step={2}
+                  title="Choose your wish"
+                  subtitle={`${wishesForOccasion(card.occasion).length} heartfelt ${card.occasionLabel} wishes in ${card.wishCategories.length} categories`}
+                />
                 <div className="mb-4">
                   <span className="mb-2 block text-xs font-medium uppercase tracking-wider text-cream-100/50">Card language</span>
                   <LanguageSelector value={card.language} onChange={card.setLanguage} />
@@ -191,6 +223,7 @@ export default function App() {
                   }}
                   category={card.wishCategory}
                   onCategoryChange={card.setWishCategory}
+                  categories={card.wishCategories}
                   wishes={card.visibleWishes}
                   selectedId={card.selectedWishId}
                   onSelect={(id) => {
@@ -236,6 +269,7 @@ export default function App() {
                     card.updateSender(k, v);
                   }}
                   onSignAsChange={card.setSignAs}
+                  occasion={card.occasion}
                   textStyle={card.textStyle}
                   onStyleChange={card.updateTextStyle}
                   onResetStyle={card.resetTextStyle}
@@ -258,6 +292,7 @@ export default function App() {
               <LiveCardPreview ref={cardRef} templateId={card.templateId} format={card.format} content={card.content} style={card.textStyle}
                 logo={isBusiness ? card.logo : undefined}
                 fireworks={card.fireworks}
+                effect={card.effect}
               >
                 <div className="mt-5 space-y-3">
                   <DownloadButton

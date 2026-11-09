@@ -6,12 +6,13 @@ Festive Card Studio lets anyone create a festival greeting card in **English, Hi
 
 | Feature | In plain words |
 |---|---|
+| **3 occasions** | *Diwali*, *Diwali Padwa* (or "Govardhan Puja") and *Bhaubij* (or "Bhai Dooj") — each with its own designs, wishes and animation |
 | **Two modes** | *Personal* (signed by a person or family) and *Business* (branded with a company's logo and contact line) |
-| **18 designs** | 12 personal templates + 6 business templates |
-| **32 wishes** | Ready-made messages in 8 categories, in all 3 languages — or write your own |
+| **33 designs** | Diwali 15 · Diwali Padwa 6 · Bhaubij 6 personal designs, plus 6 business designs for every occasion |
+| **52 wishes** | Diwali 32 · Padwa 10 · Bhaubij 10, in all 3 languages — or write your own |
 | **3 card sizes** | Portrait 1080×1350, Square 1080×1080, Landscape 1920×1080 |
-| **Fireworks** | Optional animated bursts and rockets behind the design (Off / Subtle / Grand) |
-| **Export** | Still **PNG**, or an **animated GIF** when fireworks are on |
+| **Animations** | Optional fireworks (Off / Subtle / Grand) on every occasion, plus Padwa's falling marigold petals & gold coins and Bhaubij's aarti glow & rising petals |
+| **Export** | Still **PNG**, or an **animated GIF** when any animation is on |
 | **Share** | Opens the phone's share menu (WhatsApp etc.) with the image attached |
 | **Owner contact** | "Like this website? Let's build yours." section with WhatsApp / Email buttons |
 
@@ -53,17 +54,18 @@ flowchart TB
 
 ```mermaid
 flowchart TD
-    A[Open site] --> B{Personal or Business?}
-    B -->|Personal| C1[Step 1: pick one of 12 designs<br/>+ card size + fireworks]
-    B -->|Business| C2[Step 1: pick one of 6 business designs<br/>+ card size + fireworks]
+    A[Open site] --> O{Occasion?<br/>Diwali · Padwa · Bhaubij<br/>+ which name to use}
+    O --> B{Personal or Business?}
+    B -->|Personal| C1[Step 1: pick a design for the occasion<br/>15 Diwali · 6 Padwa · 6 Bhaubij<br/>+ card size + animations]
+    B -->|Business| C2[Step 1: pick one of 6 business designs<br/>+ card size + animations]
     C1 --> D[Step 2: choose a wish or write a message<br/>+ card language]
     C2 --> D
-    D --> E1[Step 3 Personal: name + Sign as<br/>Just me / Me & family / Whole family]
+    D --> E1[Step 3 Personal: name + Sign as<br/>Just me / Me & family / Whole family<br/>+ From sister / brother on Bhaubij]
     D --> E2[Step 3 Business: business name, tagline,<br/>phone, website, address, sign-off]
     E2 --> F[Step 4 Business only: upload logo + shape]
     E1 --> G[Live preview updates on every change]
     F --> G
-    G --> H{Fireworks on?}
+    G --> H{Any animation on?}
     H -->|No| I[Download PNG / Share PNG]
     H -->|Yes| J[Download GIF / Share GIF<br/>or 'Download image PNG']
 ```
@@ -73,8 +75,9 @@ flowchart TD
 ```mermaid
 flowchart LR
     subgraph Data["src/data — content"]
+        T0[occasions.ts<br/>occasion text + names]
         T1[templates.ts<br/>list of designs]
-        T2[wishes.ts<br/>32 messages]
+        T2[wishes.ts + occasionWishes.ts<br/>52 messages]
         T3[translations.ts<br/>UI + card text]
         T4[contact.ts<br/>owner details]
     end
@@ -87,7 +90,7 @@ flowchart LR
         P2[LiveCardPreview]
     end
     subgraph Card["src/components/cards — the card"]
-        R1[CardRenderer] --> R2[18 templates]
+        R1[CardRenderer] --> R2[33 templates]
         R2 --> R3[parts: CardRoot, FitText,<br/>SenderBlock + decor]
     end
     subgraph Utils["src/utils — helpers"]
@@ -101,7 +104,7 @@ flowchart LR
     U1 -->|reads the rendered card| R1
 ```
 
-**In one sentence:** forms update the state in `useCardGenerator` → it builds a `CardContent` object → `CardRenderer` picks the template and draws the card → export utilities photograph that exact card as PNG/GIF.
+**In one sentence:** the occasion picker and forms update the state in `useCardGenerator` → it builds a `CardContent` object (using the occasion's text) → `CardRenderer` picks the template and draws the card with its animation → export utilities photograph that exact card as PNG/GIF.
 
 ## Folder map
 
@@ -117,7 +120,7 @@ festive-card-studio/
    ├─ App.tsx                ← the whole page: sections, steps, download/share handlers
    ├─ index.css              ← fonts, Tailwind theme, fireworks animations
    ├─ types/card.ts          ← ★ every data shape (start here when confused)
-   ├─ data/                  ← content: templates, wishes, translations, contact
+   ├─ data/                  ← content: occasions, templates, wishes, translations, contact
    ├─ hooks/                 ← logic: useCardGenerator (state), useCardExport (export)
    ├─ utils/                 ← helpers: export, share, filename, logo processing
    └─ components/
@@ -126,7 +129,7 @@ festive-card-studio/
          ├─ CardRenderer.tsx ← chooses the template, adds logo/fireworks layers
          ├─ parts.tsx        ← shared building blocks for templates
          ├─ typography.ts    ← font stacks + user text-style resolution
-         ├─ templates/       ← the 18 designs
+         ├─ templates/       ← the 33 designs (Diwali, Padwa, Bhaubij, business)
          └─ decor/           ← SVG art: lamps, florals, patterns, scenes, fireworks
 ```
 

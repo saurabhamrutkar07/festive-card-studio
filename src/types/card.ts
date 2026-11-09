@@ -18,7 +18,25 @@ export type TemplateCategory =
   // Business
   | 'Letterhead'
   | 'Logo Hero'
-  | 'Sign-off';
+  | 'Sign-off'
+  // Padwa
+  | 'Royal Gold'
+  | 'Soft & Romantic'
+  | 'New Year'
+  // Bhaubij
+  | 'Aukshan'
+  | 'Playful'
+  | 'Twilight'
+  // More occasion designs
+  | 'Akash Kandil'
+  | 'Lakshmi Pujan'
+  | 'Modern Sparkle'
+  | 'Gold Shopping'
+  | 'Chopda Pujan'
+  | 'Diwali Pahat'
+  | 'Minimal'
+  | 'Gifts'
+  | 'Sweets';
 
 export type TemplateId =
   | 'deepmala'
@@ -38,7 +56,35 @@ export type TemplateId =
   | 'biz-hero-marigold'
   | 'biz-hero-midnight'
   | 'biz-signoff-maroon'
-  | 'biz-signoff-minimal';
+  | 'biz-signoff-minimal'
+  | 'padwa-suvarna'
+  | 'padwa-ovalni'
+  | 'padwa-navvarsh'
+  | 'bhaubij-aukshan'
+  | 'bhaubij-bandhan'
+  | 'bhaubij-yamuna'
+  | 'diwali-kandil'
+  | 'diwali-lakshmi'
+  | 'diwali-phuljhadi'
+  | 'padwa-kanchan'
+  | 'padwa-chopda'
+  | 'padwa-pahat'
+  | 'bhaubij-tilak'
+  | 'bhaubij-bhet'
+  | 'bhaubij-mithai';
+
+/** The festival day a card is for. */
+export type Occasion = 'diwali' | 'padwa' | 'bhaubij';
+
+/**
+ * Which regional name the user prefers for the occasion:
+ * Padwa → 'primary' Diwali Padwa · 'alternate' Govardhan Puja;
+ * Bhaubij → 'primary' Bhaubij · 'alternate' Bhai Dooj.
+ */
+export type OccasionName = 'primary' | 'alternate';
+
+/** Occasion-specific background animation (on top of the optional fireworks). */
+export type OccasionEffect = 'petals' | 'aarti';
 
 /** Personal cards are signed by people; business cards are branded with a company. */
 export type CardMode = 'personal' | 'business';
@@ -46,6 +92,8 @@ export type CardMode = 'personal' | 'business';
 export interface CardTemplate {
   id: TemplateId;
   mode: CardMode;
+  /** Occasions this design appears for. */
+  occasions: Occasion[];
   name: string;
   category: TemplateCategory;
   description: string;
@@ -63,10 +111,14 @@ export type WishCategory =
   | 'short'
   | 'inspirational'
   | 'spiritual'
-  | 'prosperity';
+  | 'prosperity'
+  | 'spouse'
+  | 'forBrother'
+  | 'forSister';
 
 export interface Wish {
   id: string;
+  occasion: Occasion;
   category: WishCategory;
   text: Record<Language, string>;
 }
@@ -79,7 +131,8 @@ export type TextAlign = 'template' | 'left' | 'center' | 'right';
 
 export type FontScale = 'sm' | 'md' | 'lg';
 
-export type SignAs = 'me' | 'withFamily' | 'family';
+/** sister / brother are offered for Bhaubij only. */
+export type SignAs = 'me' | 'withFamily' | 'family' | 'sister' | 'brother';
 
 /** Free-text sender fields (signAs is set separately). */
 export type SenderTextField = 'name' | 'customSenderText';

@@ -7,8 +7,10 @@
 | 1 | **Never change a card's pixel size** to make it fit the screen. Use `ScaledCard`. | The exported PNG/GIF is a photo of the real-size card. Shrinking it shrinks the download. |
 | 2 | **Use `FitText` for any user-controlled text** (heading, message). | Users can type 500 characters. Fixed font sizes overflow; `FitText` shrinks to fit. |
 | 3 | **Templates must use inline styles, not Tailwind classes.** | Cards are rendered at exact pixel sizes and photographed by html-to-image; inline styles are predictable. Tailwind is for the page UI only. |
-| 4 | **Every template must render inside `CardRoot`.** | Fireworks are injected by `CardRoot`. Skip it and fireworks disappear on that design. |
-| 5 | **Keep the CSS fireworks keyframes and the JS frame functions in sync.** | Preview uses CSS; GIF export uses JS. If they differ, the GIF won't match the preview. |
+| 4 | **Every template must render inside `CardRoot`.** | Fireworks and occasion animations are injected by `CardRoot`. Skip it and they disappear on that design. |
+| 5 | **Keep the CSS keyframes and the JS frame functions in sync** (fireworks *and* occasion effects). | Preview uses CSS; GIF export uses JS. If they differ, the GIF won't match the preview. |
+| 5b | **Every animation duration must divide the 4-second loop.** | Otherwise the GIF jumps when it loops. |
+| 5c | **Padwa/Bhaubij wishes must not name the festival.** | Users can call it "Govardhan Puja" or "Bhai Dooj"; a wish saying "Happy Padwa" would contradict the heading. |
 | 6 | **Don't use letter-spacing on Hindi/Marathi text.** | It breaks Devanagari letter joins. `index.css` resets it for `[lang='hi']` — don't remove that rule. |
 | 7 | **Marathi cards use `lang="hi"` on the card root.** | Some display fonts lack Marathi shaping rules; Hindi shaping renders Marathi correctly. (See `CardRenderer.tsx`.) |
 | 8 | **Randomness in designs must use `seededRandom`, never `Math.random`.** | Decor positions must be identical in preview and export. |
@@ -22,8 +24,10 @@
 - [ ] English, हिन्दी **and** मराठी
 - [ ] Personal **and** Business mode (if your change touches shared code)
 - [ ] A very long name / business name and a 500-character message
-- [ ] Fireworks **Off** and **Grand**
-- [ ] Download PNG works; with fireworks on, download GIF works and animates
+- [ ] **Diwali, Padwa and Bhaubij** — and both names for Padwa/Bhaubij
+- [ ] Fireworks **Off** and **Grand**; occasion animation **on** and **off**
+- [ ] Download PNG works; with any animation on, download GIF works and animates
+- [ ] Bhaubij **From sister / From brother**, then switch to another occasion (it should fall back to "Just me")
 - [ ] Phone width (Chrome DevTools device toolbar, ~390 px)
 - [ ] `npm run build` passes
 
@@ -52,11 +56,14 @@
 | Term | Meaning |
 |---|---|
 | **Template / design** | One card layout, e.g. *Deepmala* or *Letterhead Ivory*. A React component in `templates/`. |
+| **Occasion** | The festival day: Diwali, Diwali Padwa or Bhaubij. Configured in `data/occasions.ts`. |
+| **Occasion name** | The regional name the user picks: Diwali Padwa / Govardhan Puja, Bhaubij / Bhai Dooj. Remembered per occasion. |
+| **Occasion effect** | The occasion's own animation: Padwa petals & coins, Bhaubij aarti glow. |
 | **Mode** | *Personal* (signed by people) or *Business* (branded with a company). |
 | **Format** | Card size: portrait, square or landscape. |
 | **`CardContent`** | The ready-to-display text a template receives (heading, message, signature…). |
 | **Signature** | Who the card is from: "John Doe & Family" or "Sharma Sweets". |
-| **Sign as** | How a person signs: Just me / Me & family / Whole family. |
+| **Sign as** | How a person signs: Just me / Me & family / Whole family, plus From sister / From brother on Bhaubij. |
 | **Monogram** | Circle with the business initials, shown when no logo is uploaded. |
 | **Frozen frame** | The still pose of the fireworks used in PNG downloads and thumbnails. |
 | **Frame differencing** | GIF trick: each frame stores only the pixels that changed, keeping files small. |

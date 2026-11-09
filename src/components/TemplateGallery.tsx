@@ -1,28 +1,33 @@
 import { memo, useMemo, useState } from 'react';
-import { categoriesForMode, templatesForMode } from '../data/templates';
+import { categoriesFor, templatesFor } from '../data/templates';
+import { occasionText } from '../data/occasions';
 import { t } from '../data/translations';
 import { DEFAULT_TEXT_STYLE } from '../hooks/useCardGenerator';
-import type { CardContent, CardMode, Language, TemplateCategory, TemplateId } from '../types/card';
+import type { CardContent, CardMode, Language, Occasion, TemplateCategory, TemplateId } from '../types/card';
 import { TemplateCard } from './TemplateCard';
-import { getWishById } from '../data/wishes';
+import { wishesForOccasion } from '../data/wishes';
 
 interface Props {
   selectedId: TemplateId;
   language: Language;
   mode: CardMode;
+  occasion: Occasion;
   onSelect: (id: TemplateId) => void;
 }
 
-export const TemplateGallery = memo(({ selectedId, language, mode, onSelect }: Props) => {
+export const TemplateGallery = memo(({ selectedId, language, mode, occasion, onSelect }: Props) => {
   const [category, setCategory] = useState<TemplateCategory | 'All'>('All');
 
   const sample: CardContent = useMemo(() => {
     const s = t(language);
-    const base = { heading: s.heading, subheading: s.subheading, senderIntro: s.senderIntro, language };
+    const text = occasionText(occasion, 'primary', language);
+    const pool = wishesForOccasion(occasion);
+    const pick = (category: string) => (pool.find((w) => w.category === category) ?? pool[0])?.text[language] ?? '';
+    const base = { heading: text.heading, subheading: text.subheading, senderIntro: text.senderIntro, language };
     if (mode === 'business') {
       return {
         ...base,
-        message: getWishById('professional-1')?.text[language] ?? '',
+        message: pick('professional'),
         senderName: 'Sharma Sweets',
         business: {
           name: 'Sharma Sweets',
@@ -34,20 +39,22 @@ export const TemplateGallery = memo(({ selectedId, language, mode, onSelect }: P
         },
       };
     }
+    if (occasion === 'bhaubij') return { ...base, message: pick('forBrother'), senderIntro: s.fromSister, senderName: 'Priya' };
+    if (occasion === 'padwa') return { ...base, message: pick('spouse'), senderName: language === 'en' ? 'Rahul & Priya' : 'राहुल व प्रिया' };
     return {
       ...base,
-      message: getWishById('prosperity-1')?.text[language] ?? '',
+      message: pick('prosperity'),
       senderName: language === 'en' ? 'The Sharma Family' : language === 'hi' ? 'शर्मा परिवार' : 'देशमुख परिवार',
     };
-  }, [language, mode]);
+  }, [language, mode, occasion]);
 
-  const modeTemplates = templatesForMode(mode);
+  const modeTemplates = templatesFor(mode, occasion);
   const templates = category === 'All' ? modeTemplates : modeTemplates.filter((tpl) => tpl.category === category);
 
   return (
     <div>
       <div className="scrollbar-thin -mx-1 mb-4 flex gap-2 overflow-x-auto px-1 pb-2" role="tablist" aria-label="Design categories">
-        {(['All', ...categoriesForMode(mode)] as const).map((c) => (
+        {(['All', ...categoriesFor(mode, occasion)] as const).map((c) => (
           <button
             key={c}
             type="button"
